@@ -1,0 +1,17 @@
+#
+# RPC sproto defines here
+
+.package {
+    type 0 : integer
+    session 1 : integer
+}
+
+# protoname as rpc_name, also called [service_info|rpc_info].name
+dns_sproto 1 {
+    request {
+        domain 0 : string
+    }
+    response {
+        ipv4 0 : string
+    }
+}
