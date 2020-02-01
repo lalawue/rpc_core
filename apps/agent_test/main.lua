@@ -13,6 +13,10 @@ local Test = Class("Test", AppFramework)
 
 function Test:initialize(app_name, arg_1)
    self.m_app_name = app_name
+   if not arg_1 or arg_1:len() <= 0 then
+      Log:error("Usage: %s http://www.baidu.com", app_name)
+      os.exit(0)
+   end
    self.m_domain = arg_1
    Log:info("Test init with %s", app_name)
 end

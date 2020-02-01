@@ -12,11 +12,13 @@ local function _tmpDir()
     return jit.os == "Windows" and os.getenv("TMP") or "/tmp"
 end
 
+-- define your app config
 AppEnv.Config = {
+    APP_DIR = "",                -- user defined app dir
     TMP_DIR = _tmpDir(),         -- tmp dir
     DATA_DIR = _tmpDir() .. "/rpc_framework",
     LOOP_IPV4 = '127.0.0.1',     -- loop ip
-    HOST_IPV4 = '192.168.0.168', -- host ip
+    HOST_IPV4 = '127.0.0.1',     -- host ip
     RPC_LOOP_CHECK = 8,          -- loop count to check timeout
     BROWSER_TIMEOUT = 8,         -- not precise timeout
     SPROTO_SPEC = "config/app_rpc_spec.sproto",
@@ -31,7 +33,7 @@ AppEnv.Prototols = {
 AppEnv.Service = {
    -- rpc_name = { name = "rpc_name", proto = 'AppEnv.Prototols', ipv4 = '127.0.0.1', port = 1024 }
    DNS_JSON = { name = "dns_json", proto = AppEnv.Prototols.HTTP_JSON, ipv4 = AppEnv.Config.HOST_IPV4, port = 10053 },
-   DNS_SPROTO = { name = "dns_sproto", proto = AppEnv.Prototols.LUA_SPROTO, ipv4 = AppEnv.Config.LOOP_IPV4, port = 10054},
+   DNS_SPROTO = { name = "dns_sproto", proto = AppEnv.Prototols.LUA_SPROTO, ipv4 = AppEnv.Config.LOOP_IPV4, port = 10054 },
 }
 
 -- set readonly mode

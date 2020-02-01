@@ -12,7 +12,7 @@ else
 fi
 
 # export LuaJIT path
-export LUA_PATH="?.lua;middle/?.lua;?/main.lua"
+export LUA_PATH="?.lua;middle/?.lua;"
 
 # luajit invoke
 luajit app_launcher.lua $*
