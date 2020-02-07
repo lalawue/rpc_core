@@ -1,6 +1,6 @@
--- 
+--
 -- Copyright (c) 2019 lalawue
--- 
+--
 -- This library is free software; you can redistribute it and/or modify it
 -- under the terms of the MIT license. See LICENSE for details.
 --
@@ -109,10 +109,16 @@ local function _unpack_http(m_hp)
       tbl.url = url
    end
    if m_hp.head_kv ~= nil then
-      tbl.header = {}            
+      tbl.header = {}
       local kv = m_hp.head_kv
       while kv ~= nil do
-         tbl.header[ffi.string(kv.head_field)] = ffi.string(kv.head_value)
+         local field = kv.head_field
+         local value = kv.head_value ~= nil and ffi.string(kv.head_value) or ""
+         if field ~= nil then
+            tbl.header[ffi.string(field)] = value
+         else
+            tbl.header[#tbl.header + 1] = value
+         end
          kv = kv.next
       end
    end
