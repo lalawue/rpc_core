@@ -4,7 +4,6 @@
 
 GIT_CMD=git
 LUA_JIT=luajit
-LUA_ROCKS=luarocks
 
 which_program()
 {
@@ -17,7 +16,6 @@ which_program()
 
 which_program $GIT_CMD
 which_program $LUA_JIT
-which_program $LUA_ROCKS
 
 if [ "$(basename $PWD)" = "build" ]; then
     export MACOSX_DEPLOYMENT_TARGET=10.14
