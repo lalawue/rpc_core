@@ -22,7 +22,7 @@ local Build = {
    CC = os.getenv("CC"),
    CFLAGS = os.getenv("CFLAGS"),
    MAKE = os.getenv("MAKE"),
-   INCPTH = os.getenv("LUA_JIT_INCLUDE_PATH") or "/usr/local/include/luajit-2.1/",
+   INCPTH = os.getenv("LUA_JIT_INCLUDE_PATH") or "/usr/local/include/luajit-2.0/",
    LIBPATH = os.getenv("LD_LIBRARY_PATH") or os.getenv("DYLD_LIBRARY_PATH") or "/usr/local/lib",
    LIBNAME = os.getenv("LUA_JIT_LIBRARY_NAME") or "luajit-5.1",
    --
