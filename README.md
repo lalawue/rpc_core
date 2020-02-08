@@ -3,18 +3,18 @@
 
 m_rpc_framework was a LuaJIT base network bundle aim to easily build simple network apps. Like local DNS service provide RESTful JSON API, or a crawler rise requests to fetch gziped HTML pages.
 
-Support MacOS/Linux/Windows, FreeBSD not tested.
+Support MacOS/Linux/FreeBSD/Windows.
 
 
 # Build supported libraries
 
-first build supported binary libraries, under MacOS/Linux, just
+first build supported binary libraries, under MacOS/Linux/FreeBSD, just
 
 ```
 $ cd build
-$ ./proj_build.sh
+$ sh proj_build.sh
 ```
-waits clone, build, then copy binaries finish.
+waits clone, build, then copy binaries finish, or you can download pre-compiled binaries in (release)[https://github.com/lalawue/m_rpc_framework/releases].
 
 
 # Basic Examples
