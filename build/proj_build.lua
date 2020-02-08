@@ -22,7 +22,7 @@ local Build = {
    CC = os.getenv("CC"),
    CFLAGS = os.getenv("CFLAGS"),
    MAKE = os.getenv("MAKE"),
-   INCPTH = os.getenv("LUA_JIT_INCLUDE_PATH") or "/usr/local/include/",
+   INCPTH = os.getenv("LUA_JIT_INCLUDE_PATH") or "/usr/local/include/luajit-2.1/",
    LIBPATH = os.getenv("LD_LIBRARY_PATH") or os.getenv("DYLD_LIBRARY_PATH") or "/usr/local/lib",
    LIBNAME = os.getenv("LUA_JIT_LIBRARY_NAME") or "luajit-5.1",
    --
@@ -42,11 +42,11 @@ local Build = {
       print("cmd: ", cmd)
       os.execute(cmd)
    end,
-   binaryName = function( _, name, is_so )
+   binaryName = function( _, name)
       if jit.os == 'OSX' then
          return "lib" .. name .. ".dylib"
       else
-         return is_so and (name .. ".so") or ("lib" .. name .. ".so")
+         return "lib" .. name .. ".so"
       end
    end,
    --
@@ -57,7 +57,7 @@ local Build = {
       local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lua-cjson.git; fi; ", dir_name)
       local make_cmd = fmt("cd %s; if [ ! -f '%s.so' ]; then %s %s %s -o %s.so -I%s -L%s -l%s; fi;",
                            dir_name, name, self.CC, self.CFLAGS, c_sources, name, self.INCPTH, self.LIBPATH, self.LIBNAME)
-      local copy_cmd = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name, true))
+      local copy_cmd = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
       self:runCmd( clone_cmd )
       self:runCmd( make_cmd )
       self:runCmd( copy_cmd )
@@ -79,12 +79,12 @@ local Build = {
       print("-- begin build mdns -- ")
       local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/m_dnscnt.git; cd %s; git submodule update --init --recursive; fi;",
                             dir_name, dir_name)
-      local make_cmd = fmt("cd %s; if [ ! -f 'build/%s' ]; then %s; fi; ", dir_name, self:binaryName(name, false), self.MAKE)
+      local make_cmd = fmt("cd %s; if [ ! -f 'build/%s' ]; then %s; fi; ", dir_name, self:binaryName(name), self.MAKE)
       self:runCmd( clone_cmd )
       self:runCmd( make_cmd )
       local binaries = { "mfoundation", "mnet", "mdns"}
       for _, v in ipairs(binaries) do
-         local libname = self:binaryName(v, false)
+         local libname = self:binaryName(v)
          local copy_binary = fmt("cd %s; cp build/%s %s/%s", dir_name, libname, binary_dir, libname)
          self:runCmd( copy_binary )
       end
@@ -94,8 +94,8 @@ local Build = {
       print("-- begin build sproto -- ")
       local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/sproto.git; fi;", dir_name)
       local make_cmd = fmt("cd %s; if [ ! -f '%s' ]; then %s LUA_JIT_INCLUDE_PATH=%s; fi; ",
-                           dir_name, self:binaryName(name, false), self.MAKE, self.INCPTH)
-      local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name, true))
+                           dir_name, self:binaryName(name), self.MAKE, self.INCPTH)
+      local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
       self:runCmd( clone_cmd )
       self:runCmd( make_cmd )
       self:runCmd( copy_binary )
@@ -104,8 +104,9 @@ local Build = {
    prepareLpegLibrary = function (self, dir_name, name)
       print("-- begin build lpeg -- ")
       local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lpeg.git; fi;", dir_name)
-      local make_cmd = fmt("cd %s; if [ ! -f '%s' ]; then %s LUA_JIT_INCLUDE_PATH=%s; fi; ", dir_name, self:binaryName(name, false), self.MAKE, self.INCPTH)
-      local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name, true))
+      local make_cmd = fmt("cd %s; if [ ! -f '%s' ]; then %s LUA_JIT_INCLUDE_PATH=%s; fi; ",
+                           dir_name, self:binaryName(name), self.MAKE, self.INCPTH)
+      local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
       self:runCmd( clone_cmd )
       self:runCmd( make_cmd )
       self:runCmd( copy_binary )
