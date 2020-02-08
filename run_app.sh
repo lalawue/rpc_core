@@ -15,7 +15,7 @@ if [ "$(uname)" = "Darwin" ]; then
     export DYLD_LIBRARY_PATH=$BINARIES_DIR
     export LUA_CPATH=$BINARIES_DIR/lib?.dylib
 else
-    export LD_LIBRARY_PATH=$BINARIES_DIR
+    export LD_LIBRARY_PATH=$BINARIES_DIR:/usr/lib:/usr/local/lib
     export LUA_CPATH=$BINARIES_DIR/lib?.so
 fi
 
