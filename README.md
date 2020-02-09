@@ -192,10 +192,10 @@ Thanks people provide libraries below:
 - [pkulchenko/serpent](https://github.com/pkulchenko/serpent), Lua serializer and pretty printer.
 - [armatys/hyperparser](https://github.com/armatys/hyperparser), Lua HTTP parser
 - [openresty/lua-cjson](https://github.com/openresty/lua-cjson), Lua CJSON is a fast JSON encoding/parsing module for Lua
-- [lua-htmlparser](https://github.com/msva/lua-htmlparser), An HTML parser for lua.
+- [msva/lua-htmlparser](https://github.com/msva/lua-htmlparser), An HTML parser for lua.
 - [golgote/neturl](https://github.com/golgote/neturl), URL and Query string parser, builder, normalizer for Lua
-- [lpeg](https://github.com/LuaDist/lpeg), Parsing Expression Grammars For Lua
 - [cloudwu/sproto](https://github.com/cloudwu/sproto), Yet another protocol library like google protocol buffers , but simple and fast.
+- [lpeg](https://github.com/LuaDist/lpeg), Parsing Expression Grammars For Lua
 - [m_net](https://github.com/lalawue/m_net)
 - [m_foundation](https://github.com/lalawue/m_foundation)
 - [m_dnscnt](https://github.com/lalawue/m_dnscnt)
