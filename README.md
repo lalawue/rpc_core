@@ -185,7 +185,7 @@ you can define your own message serialization format, like apps/service_dns prov
 
 Thanks people provide libraries below:
 
-- [LuaJIT/LuaJIT](https://github.com/LuaJIT/LuaJIT), Mirror of the LuaJIT git repository 
+- [LuaJIT](http://luajit.org/), a Just-In-Time Compiler for Lua by Mike Pall 
 - [kikito/middleclass](https://github.com/kikito/middleclass), Object-orientation for Lua
 - [sonoro1234/luafilesystem](https://github.com/sonoro1234/luafilesystem), Reimplement luafilesystem via LuaJIT FFI with unicode facilities
 - [hamishforbes/lua-ffi-zlib](https://github.com/hamishforbes/lua-ffi-zlib)
