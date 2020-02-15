@@ -1,4 +1,4 @@
-apps/*/
+apps/*
 binaries/*/
 build/*/
 !apps/agent_test/
