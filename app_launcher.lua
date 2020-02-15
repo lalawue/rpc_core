@@ -5,8 +5,8 @@
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
-local support_arch = { ["x86"]='', ["x64"]='' }
-local support_os = { ["Linux"]='', ["OSX"]='', ["BSD"]='', ["Windows"]='' }
+local support_arch = {["x86"] = "", ["x64"] = ""}
+local support_os = {["Linux"] = "", ["OSX"] = "", ["BSD"] = "", ["Windows"] = ""}
 if jit and support_arch[jit.arch] and support_os[jit.os] then
     -- supported arch and os
 else
@@ -42,21 +42,22 @@ assert(AppEnv)
 
 -- list apps if no app_name provide
 if type(app_name) ~= "string" then
-   local lfs = require("base.ffi_lfs")
-   print("supported apps:")
-   local _list_apps = function (path)
-      if path:len() <= 0 then
-        return
-      end
-      for fname in lfs.dir(path) do
-         if fname and fname:len() > 2 then
-            print("", fname)
-         end
-      end
-   end
-   _list_apps("apps")
-   _list_apps(AppEnv.Config.APP_DIR)
-   os.exit(0)
+    local lfs = require("base.ffi_lfs")
+    print("supported apps:")
+    local _list_apps = function(path)
+        if path:len() <= 0 then
+            return
+        end
+        for fname in lfs.dir(path) do
+            local attr = lfs.attributes(path .. "/" .. fname)
+            if attr.mode == "directory" and fname:len() > 2 then
+                print("", fname)
+            end
+        end
+    end
+    _list_apps("apps")
+    _list_apps(AppEnv.Config.APP_DIR)
+    os.exit(0)
 else
     package.path = package.path .. string.format(";apps/%s/?.lua", app_name)
     if AppEnv.Config.APP_DIR:len() > 0 then
@@ -68,15 +69,15 @@ end
 if jit.os == "Windows" then
     os.execute("mkdir " .. AppEnv.Config.TMP_DIR .. " 2>nul")
     os.execute("mkdir " .. AppEnv.Config.DATA_DIR .. " 2>nul")
- else
-    os.execute("mkdir -p " .. AppEnv.Config.TMP_DIR )
-    os.execute("mkdir -p " .. AppEnv.Config.DATA_DIR )
- end
+else
+    os.execute("mkdir -p " .. AppEnv.Config.TMP_DIR)
+    os.execute("mkdir -p " .. AppEnv.Config.DATA_DIR)
+end
 
 -- create app instance, app:initialize(...) then app:launch()
-local app_clazz = loadfile( string.format("apps/%s/main.lua", app_name) )
+local app_clazz = loadfile(string.format("apps/%s/main.lua", app_name))
 if not app_clazz then
-    app_clazz = loadfile( string.format("%s/%s/main.lua", AppEnv.Config.APP_DIR, app_name) )
+    app_clazz = loadfile(string.format("%s/%s/main.lua", AppEnv.Config.APP_DIR, app_name))
 end
 local app_instance = app_clazz():new(...)
 app_instance:launch()
