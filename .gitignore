@@ -1,2 +1,5 @@
+apps/*/
 binaries/*/
 build/*/
+!apps/agent_test/
+!apps/servnce_dns/
