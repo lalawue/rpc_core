@@ -16,9 +16,13 @@ function FileManager.mkdir(dir_path)
    FileSystem.mkdir(dir_path)
 end
 
+function FileManager.stat(path)
+    return FileSystem.attributes(path)
+end
+
 -- save data to path
 function FileManager.saveFilePath(file_path, data)
-   local f = io.open(file_path, "w+")
+   local f = io.open(file_path, "wb")
    if f then
       f:write(data)
       f:close()
