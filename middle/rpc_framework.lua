@@ -104,7 +104,7 @@ function Framework.newService(service_info, service_handler)
 
                if to_close_chann then
                   _closeServiceChann(service_info, chann, rpc_parser)
-                  rpc_parser = nil                  
+                  rpc_parser = nil
                end
          end)
    end)
@@ -115,7 +115,7 @@ function Framework.newService(service_info, service_handler)
 end
 
 -- call from coroutine, path_args and body_args refers to HTTP path and body
-function Framework.newRequest(service_info, timeout_second, path_args, body_args)
+function Framework.newRequest(service_info, option_args, path_args, body_args)
    local thread = coroutine.running()
    if thread == nil then
       Log:error("rpc_framework request should call from coroutine")
@@ -157,8 +157,9 @@ function Framework.newRequest(service_info, timeout_second, path_args, body_args
          end
    end
    chann:setCallback( callback )
-   chann:connect(service_info.ipv4, service_info.port)
-   Framework.setupTimeoutCallback(chann, timeout_second, callback)
+   --Log:debug("try connect %s", option_args.ipv4 or service_info.ipv4)
+   chann:connect(option_args.ipv4 or service_info.ipv4, service_info.port)
+   Framework.setupTimeoutCallback(chann, option_args.timeout or AppEnv.Config.BROWSER_TIMEOUT, callback)
    return coroutine.yield()     -- yeild recv or disconnect
 end
 
@@ -186,7 +187,7 @@ local kOneSecondMs = 1000000
 local function _tryCloseTimeoutRequest( current_time )
    for key, tbl in pairs(AllChannsTimeTable) do
       if os.difftime(current_time, tbl.start) >= tbl.timeout then
-         Log:warn("newRequest timeout %s", key)               
+         Log:warn("newRequest timeout %s", key)
          if tbl.callback then
             tbl.callback(tbl.chann, "event_disconnect")
             tbl.callback = nil

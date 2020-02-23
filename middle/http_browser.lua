@@ -121,10 +121,10 @@ function Browser:openURL( site_url )
 
    local timeout_second = self.m_options.timeout or AppEnv.Config.BROWSER_TIMEOUT
    local path_args = { ["domain"] = url.host } -- use HTTP path query string, whatever key
-   local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, timeout_second, path_args)
-   --local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, timeout_second, nil, path_args )
-   --local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, timeout_second, path_args)
-   --local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, timeout_second, nil, path_args )
+   local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, { timeout = timeout_second }, path_args)
+   --local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, { timeout = timeout_second }, nil, path_args )
+   --local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, { timeout = timeout_second }, path_args)
+   --local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, { timeout = timeout_second }, nil, path_args )
    if not success then
       Log:error("rpc failed ! %s", success)
       table.dump(datas)
