@@ -28,18 +28,13 @@ struct tm *gmtime(const time_t *src_time);
 time_t mktime(struct tm *timeptr);
 ]]
 
-local _M = {
-}
-
-local _local_pt = ffi.new("time_t[1]")
-local _local_ptm = ffi.typeof("struct tm *")
+local _M = {}
 
 -- return UTC time
 function _M.timeUTC()
-    ffi.C.time(_local_pt)
-    _local_ptm = ffi.C.gmtime(_local_pt)
-    _local_pt = ffi.C.mktime(_local_ptm)
-    return _local_pt
+    local pt = ffi.new("time_t[1]")
+    ffi.C.time(pt)
+    return ffi.C.mktime(ffi.C.gmtime(pt))
 end
 
 return _M
