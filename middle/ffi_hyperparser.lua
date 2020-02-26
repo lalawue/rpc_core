@@ -144,7 +144,6 @@ function Parser:process(data)
       _intvalue = data:len() < k_url_len  and data:len() or k_url_len
       ffi.copy(_buf, data, _intvalue)
       nread = tonumber(hp_process(self.m_hp, _buf, _intvalue))
-      data = data:sub(nread)
       state = self.m_hp.process_state
       if self.m_state ~= tonumber(state) then
          if state == hp.PROCESS_STATE_BODY then
