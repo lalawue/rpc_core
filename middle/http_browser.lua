@@ -85,7 +85,7 @@ local function _processRecvData(brw, data)
       return ret
    end
    if ret > 0 and ret < data:len() then
-      brw.m_left_data = data:sub(ret)
+      brw.m_left_data = data:sub(ret + 1)
    end
    return ret, state, http_tbl
 end
