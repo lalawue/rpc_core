@@ -38,7 +38,7 @@ function HttpJsonParser:process(data)
         return ret_value
      end
      if ret_value > 0 and ret_value < data:len() then
-        self.m_left_data = data:sub(ret_value)
+        self.m_left_data = data:sub(ret_value + 1)
      end
      local proto_info = nil
      local json_object = nil
