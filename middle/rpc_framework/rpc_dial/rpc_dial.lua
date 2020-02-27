@@ -37,7 +37,6 @@ function RpcDial:callMethod(rpc_info, rpc_opt, rpc_args, rpc_body)
     end
     local dial = _all_dials[rpc_info.proto]
     if dial then
-        Log:error("args type %s", type(rpc_args))
         self.m_dial = dial.newRequest(rpc_info, rpc_opt, rpc_args, rpc_body)
     else
         Log:error("failed to find dial %s", rpc_info.proto)
