@@ -14,58 +14,74 @@ else
     os.exit(0)
 end
 
--- detect params
+-- get app_name
 local app_name = ...
-local app_env_config = os.getenv("APP_ENV_CONFIG")
 
-if app_env_config then
-    print("APP_ENV_CONFIG: " .. app_env_config)
+-- get app_env_config
+local env_config_path = os.getenv("APP_ENV_CONFIG")
+if env_config_path then
+    print("APP_ENV_CONFIG: " .. env_config_path)
 else
-    app_env_config = "config/app_env.lua"
+    env_config_path = "config/app_env.lua"
     print("APP_ENV_CONFIG: not set, use config.app_env instead")
 end
 
 -- detect app_env_config file exist
-local fp = io.open(app_env_config)
+local fp = io.open(env_config_path)
 if not fp then
-    print("failed to open config:", app_env_config)
+    print("failed to open config:", env_config_path)
     os.exit(0)
 else
     fp:close()
 end
 
+local function tracebackHandler(msg)
+    print("\nPANIC : " .. tostring(msg) .. "\n")
+    print(debug.traceback())
+end
+
+local status = false
+
 -- treat Class as keyword
 require("base.scratch")
 Class = require("base.middleclass")
-AppEnv = dofile(app_env_config)
-assert(AppEnv)
+
+-- load AppEnv as global
+status, AppEnv = xpcall(dofile, tracebackHandler, env_config_path)
+if not status then
+    os.exit(0)
+else
+    assert(AppEnv)
+end
+
+-- get apps_dir
+local apps_dir = "apps"
+if type(AppEnv.Config.APP_DIR) == "string" and string.len(AppEnv.Config.APP_DIR) > 0 then
+    apps_dir = AppEnv.Config.APP_DIR
+end
 
 -- list apps if no app_name provide
 if type(app_name) ~= "string" then
     local lfs = require("base.ffi_lfs")
     print("supported apps:")
-    local _list_apps = function(path)
+    local _listApps = function(path)
         if path:len() <= 0 then
             return
         end
         for fname in lfs.dir(path) do
             local attr = lfs.attributes(path .. "/" .. fname)
-            if attr.mode == "directory" and fname:len() > 2 then
+            if attr.mode == "directory" and fname:len() > 2 and fname:sub(1, 1) ~= "." then
                 print("", fname)
             end
         end
     end
-    _list_apps("apps")
-    _list_apps(AppEnv.Config.APP_DIR)
+    _listApps(apps_dir)
     os.exit(0)
 else
-    package.path = package.path .. string.format(";apps/%s/?.lua", app_name)
-    if AppEnv.Config.APP_DIR:len() > 0 then
-        package.path = package.path .. string.format(";%s/%s/?.lua", AppEnv.Config.APP_DIR, app_name)
-    end
+    package.path = package.path .. string.format(";%s/%s/?.lua", apps_dir, app_name)
 end
 
--- setup tmp, data dir
+-- setup TMP_DIR, DATA_DIR
 if jit.os == "Windows" then
     os.execute("mkdir " .. AppEnv.Config.TMP_DIR .. " 2>nul")
     os.execute("mkdir " .. AppEnv.Config.DATA_DIR .. " 2>nul")
@@ -75,9 +91,11 @@ else
 end
 
 -- create app instance, app:initialize(...) then app:launch()
-local app_clazz = loadfile(string.format("apps/%s/main.lua", app_name))
-if not app_clazz then
-    app_clazz = loadfile(string.format("%s/%s/main.lua", AppEnv.Config.APP_DIR, app_name))
+local app_path = string.format("%s/%s/main.lua", apps_dir, app_name)
+local st, app_clazz = xpcall(loadfile, tracebackHandler, app_path)
+if st and app_clazz then
+    local app_instance = app_clazz():new(...)
+    app_instance:launch()
+else
+    print(string.format("\n[Launcher] failed to load '%s' from '%s'\n", app_name, apps_dir))
 end
-local app_instance = app_clazz():new(...)
-app_instance:launch()
