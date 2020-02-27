@@ -25,7 +25,7 @@ struct tm {
 typedef int32_t time_t;
 time_t time(time_t *dst_time);
 struct tm *gmtime(const time_t *src_time);
-time_t mktime(struct tm *timeptr);
+time_t timegm(struct tm *timeptr);
 ]]
 
 local _M = {}
@@ -34,7 +34,7 @@ local _M = {}
 function _M.timeUTC()
     local pt = ffi.new("time_t[1]")
     ffi.C.time(pt)
-    return ffi.C.mktime(ffi.C.gmtime(pt))
+    return ffi.C.timegm(ffi.C.gmtime(pt))
 end
 
 return _M
