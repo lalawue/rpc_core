@@ -93,7 +93,7 @@ function Framework.newService(service_info, service_handler)
                         to_close_chann = true
                      elseif proto_info then
                         local rpc_response = RpcResponse.new(chann, service_info)
-                        to_close_chann = service_handler(proto_info, request_object, rpc_response)
+                        to_close_chann = not service_handler(proto_info, request_object, rpc_response)
                      end
                   else
                      to_close_chann = true
