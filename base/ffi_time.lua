@@ -37,4 +37,12 @@ function _M.timeUTC()
     return ffi.C.timegm(ffi.C.gmtime(pt))
 end
 
+function _M.tmUTC()
+    local pt = ffi.new("time_t[1]")
+    ffi.C.time(pt)
+    local tm = ffi.C.gmtime(pt)
+    tm.tm_year = tm.tm_year + 1900
+    return tm
+end
+
 return _M

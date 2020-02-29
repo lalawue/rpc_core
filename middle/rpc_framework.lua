@@ -115,6 +115,12 @@ function Framework.newService(service_info, service_handler)
 end
 
 -- call from coroutine, path_args and body_args refers to HTTP path and body
+--[[
+    option_args as {
+        timeout = seconds,
+        ipv4 = service_ipv4,
+    }
+]]--
 function Framework.newRequest(service_info, option_args, path_args, body_args)
    local thread = coroutine.running()
    if thread == nil then
