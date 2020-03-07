@@ -30,19 +30,43 @@ time_t timegm(struct tm *timeptr);
 
 local _M = {}
 
--- return UTC time
+-- return UTC time()
 function _M.timeUTC()
     local pt = ffi.new("time_t[1]")
     ffi.C.time(pt)
     return ffi.C.timegm(ffi.C.gmtime(pt))
 end
 
+--[[ return UTC struct tm as gmtime()
+int tm_sec;     /* seconds (0 - 60) */
+int tm_min;     /* minutes (0 - 59) */
+int tm_hour;    /* hours (0 - 23) */
+int tm_mday;    /* day of month (1 - 31) */
+int tm_mon;     /* month of year (0 - 11) */
+int tm_year;    /* year - 1900 */
+int tm_wday;    /* day of week (Sunday = 0) */
+int tm_yday;    /* day of year (0 - 365) */
+]]
 function _M.tmUTC()
     local pt = ffi.new("time_t[1]")
     ffi.C.time(pt)
-    local tm = ffi.C.gmtime(pt)
-    tm.tm_year = tm.tm_year + 1900
-    return tm
+    return ffi.C.gmtime(pt)
+end
+
+-- return '2020-03-08T01:27:30Z', https://www.ietf.org/rfc/rfc3339.txt
+function _M.dateTimeStringUTC()
+    local m = _M.tmUTC()
+    m.tm_year = m.tm_year + 1900
+    m.tm_mon = m.tm_mon + 1
+    return string.format("%4d-%02d-%02dT%02d:%02d:%02dZ", m.tm_year, m.tm_mon, m.tm_mday, m.tm_hour, m.tm_min, m.tm_sec)
+end
+
+-- tm_year as 2020, tm_mon from 1 - 12
+function _M.tmCompatUTC()
+    local m = _M.tmUTC()
+    m.tm_year = m.tm_year + 1900
+    m.tm_mon = m.tm_mon + 1
+    return m
 end
 
 return _M
