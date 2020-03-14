@@ -9,3 +9,4 @@ build script require 'git', 'luajit', 'gcc/cc', 'make/gmake', only support MacOS
 
 - libsqlite3: manually install with root privilege
 - libiconv: manually install with root privilege
+- openssl: manually install with root privilege with version OpenSSL 1.1.1d

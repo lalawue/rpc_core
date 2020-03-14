@@ -190,6 +190,7 @@ Thanks people provide libraries below:
 - [sonoro1234/luafilesystem](https://github.com/sonoro1234/luafilesystem), Reimplement luafilesystem via LuaJIT FFI with unicode facilities
 - [hamishforbes/lua-ffi-zlib](https://github.com/hamishforbes/lua-ffi-zlib)
 - [pkulchenko/serpent](https://github.com/pkulchenko/serpent), Lua serializer and pretty printer.
+- [openssl/openssl](https://github.com/openssl/openssl), TLS/SSL and crypto library
 - [armatys/hyperparser](https://github.com/armatys/hyperparser), Lua HTTP parser
 - [openresty/lua-cjson](https://github.com/openresty/lua-cjson), Lua CJSON is a fast JSON encoding/parsing module for Lua
 - [msva/lua-htmlparser](https://github.com/msva/lua-htmlparser), An HTML parser for lua.
