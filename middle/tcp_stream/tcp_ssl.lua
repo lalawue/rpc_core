@@ -10,8 +10,13 @@
 --
 
 local NetCore = require("base.ffi_mnet")
-local OpenSSL = require("openssl").ssl
+local ret, OpenSSL = pcall(require, "openssl") -- openssl
 local Log = require("middle.logger").newLogger("[TcpSSL]", "error")
+if ret then
+    OpenSSL = OpenSSL.ssl
+else
+    return false -- OpenSSL module not ready
+end
 
 local ChannSSL = {
     m_options = nil, -- not use now

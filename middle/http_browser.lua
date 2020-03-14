@@ -128,6 +128,9 @@ function Browser:openURL(site_url)
     if url_info.scheme ~= "http" and url_info.scheme ~= "https" then
         Log:error("invalid scheme")
         return false
+    elseif url_info.scheme == "https" and not TcpSSL then
+        Log:error("SSL module not ready, can not support 'HTTPS'")
+        return false
     end
 
     if type(url_info.host) ~= "string" then

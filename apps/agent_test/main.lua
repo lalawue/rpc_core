@@ -57,9 +57,13 @@ function Test:startBusiness(rpc_framework)
     local browser = Browser.newBrowser({timeout = 30, inflate = true})
     local success, http_header, content = browser:openURL(self.m_url)
     Log:info("reqeust result: %s", success)
-    table.dump(http_header)
-    Log:info("content length: %d", content:len())
-    -- Log:info("content %s", content)
+    if success then
+        table.dump(http_header)
+        Log:info("content length: %d", content:len())
+        -- Log:info("content %s", content)
+    else
+        Log:info("failed to get result")
+    end
     os.exit(0)
 end
 
