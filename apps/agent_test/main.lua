@@ -30,16 +30,16 @@ end
 
 function Test:startBusiness(rpc_framework)
     -- test HTTP_JSON and LUA_SPROTO
-    local url = UrlCore.parse(self.m_url)
-    if not url then
+    local url_info = UrlCore.parse(self.m_url)
+    if not url_info then
         Log:error("fail to parse url '%s'", self.m_url)
         return false
     end
-    self.m_url_info = url
+    self.m_url_info = url_info
     Log:info("-- newReqeust Service.DNS_JSON with URL %s", self.m_url)
 
     local timeout_second = AppEnv.Config.BROWSER_TIMEOUT
-    local path_args = {["domain"] = url.host} -- use HTTP path query string, whatever key
+    local path_args = {["domain"] = url_info.host} -- use HTTP path query string, whatever key
 
     local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, path_args)
     Log:info("DNS_JSON with path_args result %s", success)

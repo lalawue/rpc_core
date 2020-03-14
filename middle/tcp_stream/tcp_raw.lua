@@ -50,11 +50,14 @@ end
 
 -- callback params should be (self, event_name, accept_chann, c_msg)
 function ChannRaw:setCallback(callback)
+    if not callback then
+        Log:error("invalid callback param")
+        return
+    end
     self.m_callback = callback
     self.m_chann:setCallback(
         function(chann, event_name, accept_chann, c_msg)
             if event_name == "event_connected" then
-                self.m_is_connected = true
                 self.m_callback(self, event_name, accept_chann, c_msg)
             elseif event_name == "event_recv" then
                 local data = chann:recv()

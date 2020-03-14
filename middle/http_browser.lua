@@ -114,32 +114,54 @@ function Browser:openURL(site_url)
         return false
     end
 
-    local url = UrlCore.parse(site_url)
-    if not url then
+    local url_info = UrlCore.parse(site_url)
+    if not url_info then
         Log:error("fail to parse url '%s'", site_url)
         return false
     end
-    self.m_url_info = url
+
+    if type(url_info.scheme) ~= "string" then
+        Log:error("scheme was empty, invalid url")
+        return false
+    end
+
+    if url_info.scheme ~= "http" and url_info.scheme ~= "https" then
+        Log:error("invalid scheme")
+        return false
+    end
+
+    if type(url_info.host) ~= "string" then
+        Log:error("invalid host")
+        return false
+    end
+
+    self.m_url_info = url_info
     Log:info("-- openURL %s", site_url)
 
     local timeout_second = self.m_options.timeout or AppEnv.Config.BROWSER_TIMEOUT
-    local path_args = {["domain"] = url.host} -- use HTTP path query string, whatever key
+    local path_args = {["domain"] = url_info.host} -- use HTTP path query string, whatever key
+
     local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, path_args)
-    --local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, { timeout = timeout_second }, nil, path_args )
-    --local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, { timeout = timeout_second }, path_args)
-    --local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, { timeout = timeout_second }, nil, path_args )
     if not success then
-        Log:error("failed to dns '%s'", url.host)
+        Log:error("failed to dns '%s'", url_info.host)
         table.dump(datas)
         return false
     end
 
     datas = #datas > 0 and datas[1] or datas
     local ipv4 = datas["ipv4"]
-    Log:info("get '%s' ipv4 '%s'", url.host, ipv4)
+    local port = url_info.port
+    if url_info.scheme == "http" then
+        self.m_chann = TcpRaw.openChann()
+        port = port and tonumber(port) or 80
+    else
+        self.m_chann = TcpSSL:openChann()
+        port = port and tonumber(port) or 443
+    end
+    url_info = nil -- reset nil
+    Log:info("get '%s' ipv4 '%s' with port '%d'", self.m_url_info.host, ipv4, port)
 
     local brw = self
-    self.m_chann = TcpRaw.openChann()
     local callback = function(chann, event_name, _, _)
         if event_name == "event_connected" then
             brw.m_hp = HttpParser.createParser("RESPONSE")
@@ -168,9 +190,9 @@ function Browser:openURL(site_url)
         end
     end
     self.m_chann:setCallback(callback)
-    local port = url.port and tonumber(url.port) or 80
     self.m_chann:connectAddr(ipv4, port)
     RpcFramework.setupTimeoutCallback(self.m_chann, timeout_second, callback)
+    RpcFramework.setupLoopCallback(self.m_chann, self.m_chann.onLoopEvent)
     Log:info("try connect %s:%d", ipv4, port)
     return coroutine.yield()
 end
@@ -190,7 +212,7 @@ function Browser:closeURL()
     Log:info("-- close URL: %s", self.m_url_info.host)
     if self.m_chann then
         self.m_chann:closeChann()
-        RpcFramework.removeTimeoutCallback(self.m_chann)
+        RpcFramework.removeChannCallback(self.m_chann)
         self.m_chann = nil
     end
     if self.m_hp then
