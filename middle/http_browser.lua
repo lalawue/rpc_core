@@ -158,7 +158,7 @@ function Browser:openURL(site_url)
         self.m_chann = TcpRaw.openChann()
         port = port and tonumber(port) or 80
     else
-        self.m_chann = TcpSSL:openChann()
+        self.m_chann = TcpSSL.openChann()
         port = port and tonumber(port) or 443
     end
     url_info = nil -- reset nil

@@ -8,9 +8,11 @@
 --
 -- channel read/write with SSL/TLS base on mnet tcp
 --
+-- document: https://zhaozg.github.io/lua-openssl/modules/ssl.html#ctx_new
+--
 
 local NetCore = require("base.ffi_mnet")
-local ret, OpenSSL = pcall(require, "openssl") -- openssl
+local ret, OpenSSL = pcall(require, "openssl") -- consider not exist openssl library
 local Log = require("middle.logger").newLogger("[TcpSSL]", "error")
 if ret then
     OpenSSL = OpenSSL.ssl
@@ -36,7 +38,7 @@ function ChannSSL.openChann(options)
     else
         local chann = setmetatable({}, ChannSSL)
         chann.m_options = options
-        chann.m_ctx = OpenSSL.ctx_new("SSLv23_client")
+        chann.m_ctx = OpenSSL.ctx_new("TLS") -- use ‘TLS’ to negotiate highest available SSL/TLS version
         chann.m_chann = NetCore.openChann("tcp")
         return chann
     end
