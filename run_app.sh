@@ -5,7 +5,7 @@
 LOCAL_DIR=$PWD/binaries/Local
 BINARIES_DIR=$PWD/binaries/$(uname)
 
-if [ "$#" == "0" ]; then
+if [ "$#" = "0" ]; then
     echo "Usage: $0 APP_NAME"
     exit 0
 fi
