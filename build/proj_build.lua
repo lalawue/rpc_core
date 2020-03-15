@@ -13,19 +13,6 @@ else
     os.exit(0)
 end
 
-local function _readCmdFromTmpfile(cmd)
-    local tmp_path = "/tmp/proj_build_tmpfile"
-    os.execute(cmd .. " > " .. tmp_path)
-    local fp = io.open(tmp_path, "rb")
-    if fp then
-        local buf = fp:read("*a")
-        fp:close()
-        os.remove(tmp_path)
-        return buf:gsub("\n", "")
-    end
-    return nil
-end
-
 local build_dir, uname = ...
 local binary_dir = string.format("%s/../binaries/%s", build_dir, uname)
 
@@ -38,7 +25,7 @@ local Build = {
     INCPTH = os.getenv("LUA_JIT_INCLUDE_PATH") or "/usr/local/include/luajit-2.0/",
     LIBPATH = os.getenv("LD_LIBRARY_PATH") or os.getenv("DYLD_LIBRARY_PATH") or "/usr/local/lib",
     LIBNAME = os.getenv("LUA_JIT_LIBRARY_NAME") or "luajit-5.1",
-    PKGCONFIG = os.getenv("PKG_CONFIG_PATH") or _readCmdFromTmpfile("echo /usr/local/Cellar/openssl/*/lib/pkgconfig/"), -- for lua-openssl
+    LOCALPATH = os.getenv("PWD") .. "/../binaries/Local", -- store to binaries
     --
     --
     setupToolchain = function(self)
@@ -163,6 +150,29 @@ local Build = {
         self:runCmd(copy_binary)
         print("-- end -- \n")
     end,
+    prepareOpenSSLLibrary = function(self, tar_name, dir_name)
+        print("-- begin download and build OpenSSL -- ")
+        local download_cmd =
+            fmt(
+            "if [ ! -f '%s' ]; then curl -L -o %s https://github.com/openssl/openssl/archive/%s ; fi;",
+            tar_name,
+            tar_name,
+            tar_name
+        )
+        local unpack_cmd = fmt("if [ ! -d '%s' ]; then tar xzf %s ; fi", dir_name, tar_name)
+        local make_cmd =
+            fmt(
+            "if [ ! -f '%s' ]; then mkdir -p %s; cd %s; ./config --prefix=%s; make install; fi",
+            self.LOCALPATH .. "/bin/openssl",
+            self.LOCALPATH,
+            dir_name,
+            self.LOCALPATH
+        )
+        self:runCmd(download_cmd)
+        self:runCmd(unpack_cmd)
+        self:runCmd(make_cmd)
+        print("-- end -- \n")
+    end,
     prepareLuaOpenSSLLibrary = function(self, dir_name, name)
         print("-- begin build lua-openssl -- ")
         local clone_cmd =
@@ -172,7 +182,7 @@ local Build = {
             "cd %s; if [ ! -f '%s.so' ]; then export PKG_CONFIG_PATH=%s; make; fi; ",
             dir_name,
             name,
-            self.PKGCONFIG
+            self.LOCALPATH .. "/lib/pkgconfig"
         )
         local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
         self:runCmd(clone_cmd)
@@ -192,7 +202,7 @@ print("CFLAGS: \t", Build.CFLAGS)
 print("LUA_JIT_INCLUDE_PATH: ", Build.INCPTH)
 print("LD_LIBRARY_PATH: ", Build.LIBPATH)
 print("LUA_JIT_LIBRARY_NAME: ", Build.LIBNAME)
-print("PKG_CONFIG_PATH: ", Build.PKGCONFIG)
+print("LOCAL_LIBARY_PATH: ", Build.LOCALPATH)
 print("\n--- prepare to build\n")
 os.execute("sleep 3")
 
@@ -201,4 +211,5 @@ Build:prepareHyperparserLibrary("hyperparser", "hyperparser")
 Build:prepareDnsLibrary("m_dnscnt", "mdns")
 Build:prepareSprotoLibrary("sproto", "sproto")
 Build:prepareLpegLibrary("lpeg", "lpeg")
+Build:prepareOpenSSLLibrary("OpenSSL_1_1_1d.tar.gz", "openssl-OpenSSL_1_1_1d")
 Build:prepareLuaOpenSSLLibrary("lua-openssl", "openssl")

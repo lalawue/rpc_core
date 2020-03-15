@@ -4,3 +4,4 @@ platform dependent libraries list below, or you can download pre-compiled binari
 - Linux
 - FreeBSD
 - WindowsNT
+- Local: for local build OpenSSL
