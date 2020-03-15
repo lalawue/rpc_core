@@ -5,11 +5,6 @@
 LOCAL_DIR=$PWD/binaries/Local
 BINARIES_DIR=$PWD/binaries/$(uname)
 
-if [ "$#" = "0" ]; then
-    echo "Usage: $0 APP_NAME"
-    exit 0
-fi
-
 if [ ! -d $BINARIES_DIR ]; then
     echo "binaries dir not exist, please cd build/ && ./proj_build.sh first !"
     exit 0
