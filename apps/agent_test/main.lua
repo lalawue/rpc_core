@@ -10,14 +10,16 @@ local UrlCore = require("middle.url")
 local RpcFramework = require("middle.rpc_framework")
 local Browser = require("middle.http_browser")
 local Log = require("middle.logger").newLogger("[Test]", "info")
+local FileManager = require("middle.file_manager")
 
 local Test = Class("Test", AppFramework)
 
-function Test:initialize(app_name, arg_url, arg_2)
+function Test:initialize(app_name, arg_url, arg_store_file_name)
     self.m_app_name = app_name
+    self.m_store_file_name = arg_store_file_name
     self.m_url = arg_url
     if not self.m_url then
-        Log:error("Usage: %s URL", app_name)
+        Log:error("Usage: %s URL [STORE_FILE_NAME]", app_name)
         os.exit(0)
     else
         Log:info("Test init with %s", app_name)
@@ -60,6 +62,9 @@ function Test:startBusiness(rpc_framework)
     if success then
         table.dump(http_header)
         Log:info("content length: %d", content:len())
+        if type(self.m_store_file_name) == "string" and self.m_store_file_name:len() > 0 then
+            FileManager.saveFilePath(self.m_store_file_name, content)
+        end
         -- Log:info("content %s", content)
     else
         Log:info("failed to get result")
