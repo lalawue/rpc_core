@@ -51,7 +51,7 @@ AppEnv.Prototols = {
     TCP_RAW = "TCP_RAW", -- raw data in TCP, with 2 bytes length ahead
     HTTP_JSON = "HTTP_JSON", -- JSON in HTTP body
     LUA_SPROTO = "LUA_SPROTO", -- https://github.com/cloudwu/sproto, like protobuf, with 2 bytes length ahead
-    REDIS_SPROTO = "REDIS_SPROTO", -- Redis Protocol specification
+    REDIS_SPROTO = "REDIS_SPROTO" -- Redis Protocol specification
 }
 
 AppEnv.Store = {
@@ -79,7 +79,7 @@ AppEnv.Service = {
         proto = AppEnv.Prototols.REDIS_SPROTO,
         ipv4 = AppEnv.Config.HOST_IPV4,
         port = 6379
-    },
+    }
 }
 
 -- set readonly mode

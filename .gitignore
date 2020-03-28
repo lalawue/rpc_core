@@ -3,4 +3,5 @@ binaries/*/
 build/*/
 build/*.tar.gz
 !apps/agent_test/
+!apps/agent_redis/
 !apps/servnce_dns/
