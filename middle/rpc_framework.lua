@@ -8,7 +8,7 @@
 local NetCore = require("base.ffi_mnet")
 local RpcDial = require("rpc_framework.rpc_dial.rpc_dial")
 local RpcParser = require("rpc_framework.rpc_parser.rpc_parser")
-local Log = require("middle.logger").newLogger("[RPC]", "info")
+local Log = require("middle.logger").newLogger("[RPC]", "trace")
 
 -- Response for servce
 --
@@ -52,12 +52,16 @@ function Framework.initFramework()
     end
 end
 
-local function _closeServiceChann(service_info, chann, rpc_parser)
+local function _closeServiceChann(service_info, chann, rpc_parser, keep_alive)
     if rpc_parser then
-        Log:info("'%s' disconnect: %s", service_info.name, chann)
-        Framework.removeChannCallback(chann)
-        chann:close()
-        rpc_parser:destroy()
+        if keep_alive then
+            Log:trace("'%s' keepalive: %s", service_info.name, chann)
+        else
+            Log:trace("'%s' disconnect: %s", service_info.name, chann)
+            Framework.removeChannCallback(chann)
+            chann:close()
+            rpc_parser:destroy()
+        end
     end
 end
 
@@ -116,10 +120,13 @@ end
 --
 
 -- call from coroutine, path_args and body_args refers to HTTP path and body
+-- return 'true/false, return_object, reuse_info'
 --[[
     option_args as {
         timeout = seconds,
         ipv4 = service_ipv4,
+        keep_alive = keep_tcp_connection,
+        reuse_info = connection_info of last newRequest return value,
     }
 ]] function Framework.newRequest(
     service_info,
@@ -137,39 +144,49 @@ end
     end
 
     local rpc_parser = RpcParser.newResponse(service_info)
-    local chann = NetCore.openChann("tcp")
-    local callback = function(chann, event_name, _, _)
-        local to_resume = nil
-        local ret_object = nil
-        if event_name == "event_connected" then
-            Log:info("'%s' connected: %s", service_info.name, chann)
-            local request = RpcDial.new()
-            request:callMethod(service_info, nil, path_args, body_args)
-            local data = request:makePackage()
-            chann:send(data)
-        elseif event_name == "event_recv" then
-            local data = chann:recv()
-            local ret, proto, response_object = rpc_parser:process(data)
-            if ret < 0 then
+    local chann = option_args.reuse_info or NetCore.openChann("tcp")
+    if chann:state() == "state_connected" then
+        Log:trace("'%s' reuseinfo: %s", service_info.name, chann)
+        local request = RpcDial.new()
+        request:callMethod(service_info, nil, path_args, body_args)
+        local data = request:makePackage()
+        chann:send(data)
+    else
+        local callback = function(chann, event_name, _, _)
+            local to_resume = nil
+            local ret_object = nil
+            if event_name == "event_connected" then
+                Log:trace("'%s' connected: %s", service_info.name, chann)
+                local request = RpcDial.new()
+                request:callMethod(service_info, nil, path_args, body_args)
+                local data = request:makePackage()
+                chann:send(data)
+            elseif event_name == "event_recv" then
+                local data = chann:recv()
+                local ret, proto, response_object = rpc_parser:process(data)
+                if ret < 0 then
+                    to_resume = false
+                elseif proto then
+                    to_resume = true
+                    ret_object = response_object
+                end
+            elseif event_name == "event_disconnect" then
                 to_resume = false
-            elseif proto then
-                to_resume = true
-                ret_object = response_object
             end
-        elseif event_name == "event_disconnect" then
-            to_resume = false
-        end
 
-        if to_resume ~= nil then
-            _closeServiceChann(service_info, chann, rpc_parser)
-            rpc_parser = nil
-            coroutine.resume(thread, to_resume, ret_object)
+            if to_resume ~= nil then
+                _closeServiceChann(service_info, chann, rpc_parser, option_args.keep_alive)
+                if not option_args.keep_alive then
+                    rpc_parser = nil
+                end
+                coroutine.resume(thread, to_resume, ret_object, chann)
+            end
         end
+        chann:setCallback(callback)
+        --Log:debug("try connect %s", option_args.ipv4 or service_info.ipv4)
+        chann:connect(option_args.ipv4 or service_info.ipv4, service_info.port)
+        Framework.setupTimeoutCallback(chann, option_args.timeout or AppEnv.Config.BROWSER_TIMEOUT, callback)
     end
-    chann:setCallback(callback)
-    --Log:debug("try connect %s", option_args.ipv4 or service_info.ipv4)
-    chann:connect(option_args.ipv4 or service_info.ipv4, service_info.port)
-    Framework.setupTimeoutCallback(chann, option_args.timeout or AppEnv.Config.BROWSER_TIMEOUT, callback)
     return coroutine.yield() -- yeild recv or disconnect
 end
 
@@ -201,7 +218,7 @@ end
 function Framework.setupLoopCallback(chann, callback)
     if chann and callback then
         AllChannsLoopTable[chann] = callback
-        --Log:debug("setup loop callback %s", chann)
+    --Log:debug("setup loop callback %s", chann)
     end
 end
 
