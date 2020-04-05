@@ -11,6 +11,7 @@ Support MacOS/Linux/FreeBSD/Windows.
 first build dependent libraries, under MacOS/Linux/FreeBSD, just
 
 ```js
+$ export LUA_JIT_INCLUDE_PATH=/usr/local/include/luajit-2.1
 $ cd build
 $ sh proj_build.sh
 ```
@@ -24,8 +25,10 @@ you can list supported apps just
 ```js
 $ ./run_app.sh
 APP_ENV_CONFIG: not set, use config.app_env instead
+[AppEnv] parse sproto spec config/app_rpc_spec.sproto
 supported apps:
         service_dns
+        agent_redis
         agent_test
 ```
 
@@ -197,6 +200,7 @@ Thanks people provide libraries below:
 - [golgote/neturl](https://github.com/golgote/neturl), URL and Query string parser, builder, normalizer for Lua
 - [cloudwu/sproto](https://github.com/cloudwu/sproto), Yet another protocol library like google protocol buffers , but simple and fast.
 - [lpeg](https://github.com/LuaDist/lpeg), Parsing Expression Grammars For Lua
+- [mah0x211/lua-resp](https://github.com/mah0x211/lua-resp), RESP (REdis Serialization Protocol) parser for lua
 - [m_net](https://github.com/lalawue/m_net)
 - [m_foundation](https://github.com/lalawue/m_foundation)
 - [m_dnscnt](https://github.com/lalawue/m_dnscnt)

@@ -13,7 +13,8 @@ local App = Class("AgentRedis", AppFramework)
 
 function App:initialize(app_name)
     self.m_app_name = app_name
-    Log:info("init %s", app_name)
+    local protocol = AppEnv.Service.REDIS_SPROTO
+    Log:info("init %s, try to connect '%s:%d'", app_name, protocol.ipv4, protocol.port)
 end
 
 function App:loadBusiness(rpc_framework)
@@ -21,12 +22,10 @@ function App:loadBusiness(rpc_framework)
 end
 
 function App:startBusiness(rpc_framework)
-    Log:info("-- newReqeust to Service.REDIS_SPROTO --")
-
     local cmd_tbl = {'HMSET', 'myhash', 'hello', '"world"'}
-    Log:info("redis command '%s'", table.concat(cmd_tbl, " "))
     local ret, datas = rpc_framework.newRequest(AppEnv.Service.REDIS_SPROTO, {timeout = 8}, cmd_tbl)
     if ret then
+        Log:info("send redis command '%s'", table.concat(cmd_tbl, " "))        
         Log:info("service response '%s'", datas)
     else
         Log:error("Please start redis-server in port %d", AppEnv.Service.REDIS_SPROTO.port)

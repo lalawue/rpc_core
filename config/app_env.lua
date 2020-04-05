@@ -77,7 +77,7 @@ AppEnv.Service = {
     REDIS_SPROTO = {
         name = "redis_sproto",
         proto = AppEnv.Prototols.REDIS_SPROTO,
-        ipv4 = AppEnv.Config.HOST_IPV4,
+        ipv4 = AppEnv.Config.LOOP_IPV4,
         port = 6379
     }
 }
