@@ -22,14 +22,25 @@ function App:loadBusiness(rpc_framework)
 end
 
 function App:startBusiness(rpc_framework)
-    local cmd_tbl = {'HMSET', 'myhash', 'hello', '"world"'}
-    local ret, datas = rpc_framework.newRequest(AppEnv.Service.REDIS_SPROTO, {timeout = 8}, cmd_tbl)
-    if ret then
-        Log:info("send redis command '%s'", table.concat(cmd_tbl, " "))        
-        Log:info("service response '%s'", datas)
-    else
-        Log:error("Please start redis-server in port %d", AppEnv.Service.REDIS_SPROTO.port)
+    local newRequest = rpc_framework.newRequest
+    local PROTOCOL = AppEnv.Service.REDIS_SPROTO
+    local opt = {timeout = AppEnv.Config.BROWSER_TIMEOUT, keep_alive = true}
+
+    local ret = nil
+    local datas = nil
+
+    -- keep socket alive, reuse it with multiple redis command
+    for i = 1, 5, 1 do
+        local data_tbl = {"HMSET", "myhash", "hello", '"world"', "count", tostring(i)}
+        ret, datas, opt.reuse_info = newRequest(PROTOCOL, opt, data_tbl)
+        if ret and datas then
+            Log:info("server response '%s'", datas)
+        else
+            table.dump(datas)
+        end
+        opt.keep_alive = (i + 1 < 5) -- close socket for last one
     end
+
     os.exit(0)
 end
 
