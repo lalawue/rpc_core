@@ -13,9 +13,10 @@ Logger.__index = Logger
 
 local _level_name_number = {
    ["debug"] = 1,
-   ["info"] = 2,
-   ["warn"] = 3,
-   ["error"] = 4
+   ["trace"] = 2,
+   ["info"] = 3,
+   ["warn"] = 4,
+   ["error"] = 5
 }
 
 local function printf(fmt, ...)
@@ -47,6 +48,10 @@ end
 
 function Logger:info(fmt, ...)
    self:log("info", fmt, ...)
+end
+
+function Logger:trace(fmt, ...)
+   self:log("trace", fmt, ...)
 end
 
 function Logger:debug(fmt, ...)
