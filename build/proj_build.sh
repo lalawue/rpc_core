@@ -8,7 +8,7 @@ LUA_JIT=luajit
 which_program()
 {
     which $1 > /dev/null
-    if [ "$?" == "1" ]; then
+    if [ "$?" = "1" ]; then
         echo "\'$1\' NOT found, failed to build binary modules, exit build !"    
         exit 0
     fi    
