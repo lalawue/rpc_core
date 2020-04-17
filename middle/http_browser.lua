@@ -142,7 +142,7 @@ function Browser:openURL(site_url)
     self.m_url_info = url_info
     Log:info("-- openURL %s", site_url)
 
-    local timeout_second = self.m_options.timeout or AppEnv.Config.BROWSER_TIMEOUT
+    local timeout_second = self.m_options.timeout or AppEnv.Config.RPC_TIMEOUT
     local path_args = {["domain"] = url_info.host} -- use HTTP path query string, whatever key
 
     local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, path_args)
@@ -195,8 +195,12 @@ function Browser:openURL(site_url)
     end
     self.m_chann:setCallback(callback)
     self.m_chann:connectAddr(ipv4, port)
-    RpcFramework.setupTimeoutCallback(self.m_chann, timeout_second, callback)
-    RpcFramework.setupLoopCallback(self.m_chann, self.m_chann.onLoopEvent)
+    RpcFramework.setupLoopCallback(
+        self.m_chann,
+        function(event_name)
+            self:onLoopEvent(event_name)
+        end
+    )
     Log:info("try connect %s:%d", ipv4, port)
     return coroutine.yield()
 end
@@ -216,7 +220,7 @@ function Browser:closeURL()
     Log:info("-- close URL: %s", self.m_url_info.host)
     if self.m_chann then
         self.m_chann:closeChann()
-        RpcFramework.removeChannCallback(self.m_chann)
+        RpcFramework.removeLoopCallback(self.m_chann)
         self.m_chann = nil
     end
     if self.m_hp then
@@ -225,6 +229,16 @@ function Browser:closeURL()
     end
     self.m_left_data = nil
     self.m_url_info = nil
+end
+
+function Browser:onLoopEvent(event_name)
+    if self.m_chann.onLoopEvent then
+        local ret = self.m_chann:onLoopEvent(event_name)
+        if ret then
+            return
+        end
+    end
+    RpcFramework.removeLoopCallback(self.m_chann)
 end
 
 return Browser

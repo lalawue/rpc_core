@@ -24,7 +24,7 @@ end
 function App:startBusiness(rpc_framework)
     local newRequest = rpc_framework.newRequest
     local PROTOCOL = AppEnv.Service.REDIS_SPROTO
-    local opt = {timeout = AppEnv.Config.BROWSER_TIMEOUT, keep_alive = true}
+    local opt = {timeout = AppEnv.Config.RPC_TIMEOUT, keep_alive = true}
 
     local ret = nil
     local datas = nil

@@ -42,8 +42,7 @@ end
 local Framework = {}
 Framework.__index = Framework
 
-local AllChannsTimeTable = {} -- timeout table for chann
-local AllChannsLoopTable = {} -- loop table for chann
+local AllChannsCallbackTable = {} -- chann index in callback
 
 function Framework.initFramework()
     if not Framework.m_has_init then
@@ -58,7 +57,7 @@ local function _closeServiceChann(service_info, chann, rpc_parser, keep_alive)
             Log:trace("'%s' keepalive: %s", service_info.name, chann)
         else
             Log:trace("'%s' disconnect: %s", service_info.name, chann)
-            Framework.removeChannCallback(chann)
+            Framework.removeLoopCallback(chann)
             chann:close()
             rpc_parser:destroy()
         end
@@ -117,7 +116,6 @@ function Framework.newService(service_info, service_handler)
     Log:info("rpc_framework start service '%s' at '%s:%d'", service_info.name, service_info.ipv4, service_info.port)
     return true
 end
---
 
 -- call from coroutine, path_args and body_args refers to HTTP path and body
 -- return 'true/false, return_object, reuse_info'
@@ -128,11 +126,8 @@ end
         keep_alive = keep_tcp_connection,
         reuse_info = connection_info of last newRequest return value,
     }
-]] function Framework.newRequest(
-    service_info,
-    option_args,
-    path_args,
-    body_args)
+]]
+function Framework.newRequest(service_info, option_args, path_args, body_args)
     local thread = coroutine.running()
     if thread == nil then
         Log:error("rpc_framework request should call from coroutine")
@@ -170,7 +165,7 @@ end
                     to_resume = true
                     ret_object = response_object
                 end
-            elseif event_name == "event_disconnect" then
+            elseif event_name == "event_disconnect" or event_name == "event_timer" then
                 to_resume = false
             end
 
@@ -185,80 +180,36 @@ end
         chann:setCallback(callback)
         --Log:debug("try connect %s", option_args.ipv4 or service_info.ipv4)
         chann:connect(option_args.ipv4 or service_info.ipv4, service_info.port)
-        Framework.setupTimeoutCallback(chann, option_args.timeout or AppEnv.Config.BROWSER_TIMEOUT, callback)
+        chann:activeEvent("event_timer", tonumber(option_args.timeout or AppEnv.Config.RPC_TIMEOUT) * 1000000)
     end
     return coroutine.yield() -- yeild recv or disconnect
 end
 
--- callback function(chann, event_name)
-function Framework.setupTimeoutCallback(chann, timeout_second, callback)
-    if not chann or not timeout_second or not callback then
-        Log:error("invalid timeout callback param")
-        return
-    end
-    AllChannsTimeTable[tostring(chann)] = {
-        ["start"] = os.time(),
-        ["timeout"] = timeout_second,
-        ["chann"] = chann,
-        ["callback"] = callback
-    }
-    --Log:debug("setup timer callback %s", chann)
-end
-
-function Framework.removeChannCallback(chann)
+function Framework.removeLoopCallback(chann)
     if not chann then
         Log:error("invalid chann")
         return
     end
-    AllChannsTimeTable[tostring(chann)] = nil
-    AllChannsLoopTable[chann] = nil
+    AllChannsCallbackTable[chann] = nil
+    Log:trace("remove loop callback")
 end
 
 -- callback function(chann_key, "event_loop")
 function Framework.setupLoopCallback(chann, callback)
     if chann and callback then
-        AllChannsLoopTable[chann] = callback
-    --Log:debug("setup loop callback %s", chann)
+        AllChannsCallbackTable[chann] = callback
     end
 end
 
 local kOneSecondMs = 1000000
 
-local function _tryCloseTimeoutRequest(current_time)
-    for key, tbl in pairs(AllChannsTimeTable) do
-        if os.difftime(current_time, tbl.start) >= tbl.timeout then
-            Log:warn("newRequest timeout %s", key)
-            if tbl.callback then
-                tbl.callback(tbl.chann, "event_disconnect")
-                tbl.callback = nil
-                tbl.chann = nil
-            end
-            AllChannsTimeTable[key] = nil
-        end
-    end
-end
-
-local function _loopEvent()
-    for chann, callback in pairs(AllChannsLoopTable) do
-        callback(chann, "event_loop")
-    end
-end
-
-function Framework.pollForever(callback, timeout_ms)
+function Framework.pollForever(timeout_ms)
     timeout_ms = timeout_ms and tonumber(timeout_ms) or kOneSecondMs
-    callback = type(callback) == "function" and callback or function()
-        end
-    local step_count = 1 -- step to update time
     while true do
-        if step_count < AppEnv.Config.RPC_LOOP_CHECK then
-            step_count = step_count + 1
-        else
-            step_count = 1
-            _tryCloseTimeoutRequest(os.time())
+        for chann, callback in pairs(AllChannsCallbackTable) do
+            callback(chann, "event_loop")
         end
-        _loopEvent()
         NetCore.poll(timeout_ms)
-        callback()
     end
 end
 

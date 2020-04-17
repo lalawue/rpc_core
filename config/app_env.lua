@@ -43,8 +43,7 @@ AppEnv.Config = {
     DATA_DIR = _tmpDir() .. "/rpc_apps",
     LOOP_IPV4 = "127.0.0.1", -- loop ip
     HOST_IPV4 = "0.0.0.0", -- host ip
-    RPC_LOOP_CHECK = 8, -- loop count to check timeout
-    BROWSER_TIMEOUT = 8 -- not precise timeout
+    RPC_TIMEOUT = 8, -- 8 second
 }
 
 AppEnv.Prototols = {

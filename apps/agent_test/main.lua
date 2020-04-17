@@ -40,7 +40,7 @@ function Test:startBusiness(rpc_framework)
     self.m_url_info = url_info
     Log:info("-- newReqeust Service.DNS_JSON with URL %s", self.m_url)
 
-    local timeout_second = AppEnv.Config.BROWSER_TIMEOUT
+    local timeout_second = AppEnv.Config.RPC_TIMEOUT
     local path_args = {["domain"] = url_info.host} -- use HTTP path query string, whatever key
 
     local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, path_args)
@@ -55,17 +55,22 @@ function Test:startBusiness(rpc_framework)
     success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, {timeout = timeout_second}, nil, path_args)
     Log:info("LUA_SPROTO with body_args result %s", success)
 
+    if not success then
+        Log:error("failed to get ip from '%s'", url_info.host)
+        os.exit(0)
+    end
+
     Log:info("open browser with %s", self.m_url)
     local browser = Browser.newBrowser({timeout = 30, inflate = true})
     local success, http_header, content = browser:openURL(self.m_url)
     Log:info("reqeust result: %s", success)
     if success then
+        -- Log:info("content %s", content)
         table.dump(http_header)
         Log:info("content length: %d", content:len())
         if type(self.m_store_file_name) == "string" and self.m_store_file_name:len() > 0 then
             FileManager.saveFilePath(self.m_store_file_name, content)
         end
-        -- Log:info("content %s", content)
     else
         Log:info("failed to get result")
     end
