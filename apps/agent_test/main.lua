@@ -33,13 +33,21 @@ end
 function Test:startBusiness(rpc_framework)
     -- test HTTP_JSON and LUA_SPROTO
     local url_info = UrlCore.parse(self.m_url)
+
     if not url_info then
         Log:error("fail to parse url '%s'", self.m_url)
-        return false
+        os.exit(0)
     end
+
+    if type(url_info.scheme) ~= "string" or (url_info.scheme ~= "http" and url_info.scheme ~= "https") then
+        Log:error("invalid scheme %s, try 'https://www.baidu.com'", url_info.scheme)
+        os.exit(0)
+    end
+
     self.m_url_info = url_info
     Log:info("-- newReqeust Service.DNS_JSON with URL %s", self.m_url)
 
+    Log:info("get ip from host '%s'", url_info.host)
     local timeout_second = AppEnv.Config.RPC_TIMEOUT
     local path_args = {["domain"] = url_info.host} -- use HTTP path query string, whatever key
 

@@ -92,4 +92,9 @@ function ChannRaw:recv()
     end
 end
 
+-- event_name always "event_loop", return true to keep event
+function ChannRaw:onLoopEvent(event_name)
+    return false
+end
+
 return ChannRaw
