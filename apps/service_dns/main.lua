@@ -52,6 +52,7 @@ local App = Class("DnsAgent", AppFramework)
 function App:initialize()
     if not self.m_has_init then
         self.m_has_init = true
+        self.m_poll_timeout_ms = 0.2 * 1000000 -- one loop 0.2s
         self.m_wait_list = setmetatable({}, {__mode = "v"})
     end
 end
@@ -153,21 +154,23 @@ function App:loadBusiness(rpc_framework)
             return _sprotoServiceHandler(self, a, b, c)
         end
     )
+
+    -- setup loop callback
+    rpc_framework.setupLoopCallback(
+        function(event_name)
+            for domain, response in pairs(self.m_wait_list) do
+                local success, ip = _queryDomainFromDnsCore(domain)
+                if success and ip then
+                    response:sendResponse({ipv4 = ip})
+                    self.m_wait_list[domain] = nil
+                end
+            end
+        end
+    )
 end
 
 function App:startBusiness(rpc_framework)
     -- no coroutine code here
-end
-
--- one loop in poll
-function App:oneLoopInPoll()
-    for domain, response in pairs(self.m_wait_list) do
-        local success, ip = _queryDomainFromDnsCore(domain)
-        if success and ip then
-            response:sendResponse({ipv4 = ip})
-            self.m_wait_list[domain] = nil
-        end
-    end
 end
 
 return App

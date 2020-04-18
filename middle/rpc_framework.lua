@@ -42,7 +42,7 @@ end
 local Framework = {}
 Framework.__index = Framework
 
-local AllChannsCallbackTable = {} -- chann index in callback
+local AllLoopCallbackTable = {} -- chann index in callback
 
 function Framework.initFramework()
     if not Framework.m_has_init then
@@ -57,7 +57,6 @@ local function _closeServiceChann(service_info, chann, rpc_parser, keep_alive)
             Log:trace("'%s' keepalive: %s", service_info.name, chann)
         else
             Log:trace("'%s' disconnect: %s", service_info.name, chann)
-            Framework.removeLoopCallback(chann)
             chann:close()
             rpc_parser:destroy()
         end
@@ -65,7 +64,7 @@ local function _closeServiceChann(service_info, chann, rpc_parser, keep_alive)
 end
 
 -- service_handler is a callback function(proto_info, request_object, rpc_response) end,
--- return false to shutdown connection
+-- service_handler return false to shutdown connection
 function Framework.newService(service_info, service_handler)
     if type(service_info) ~= "table" or type(service_handler) ~= "function" then
         Log:error("rpc_framework new service invalid params, %s", debug.traceback())
@@ -185,29 +184,29 @@ function Framework.newRequest(service_info, option_args, path_args, body_args)
     return coroutine.yield() -- yeild recv or disconnect
 end
 
-function Framework.removeLoopCallback(chann)
-    if not chann then
-        Log:error("invalid chann")
+function Framework.removeLoopCallback(callback_index)
+    if type(callback_index) ~= "number" then
         return
     end
-    AllChannsCallbackTable[chann] = nil
-    Log:trace("remove loop callback")
+    AllLoopCallbackTable[tonumber(callback_index)] = AllLoopCallbackTable[#AllLoopCallbackTable]
+    AllLoopCallbackTable[#AllLoopCallbackTable] = nil
 end
 
 -- callback function(chann_key, "event_loop")
-function Framework.setupLoopCallback(chann, callback)
-    if chann and callback then
-        AllChannsCallbackTable[chann] = callback
+-- return index
+function Framework.setupLoopCallback(callback)
+    if not callback then
+        Log:error("invalid loop callback")
     end
+    AllLoopCallbackTable[#AllLoopCallbackTable + 1] = callback
+    return #AllLoopCallbackTable -- callback index
 end
 
-local kOneSecondMs = 1000000
-
 function Framework.pollForever(timeout_ms)
-    timeout_ms = timeout_ms and tonumber(timeout_ms) or kOneSecondMs
+    timeout_ms = timeout_ms and tonumber(timeout_ms) or 1000000
     while true do
-        for chann, callback in pairs(AllChannsCallbackTable) do
-            callback(chann, "event_loop")
+        for _, callback in ipairs(AllLoopCallbackTable) do
+            callback("event_loop")
         end
         NetCore.poll(timeout_ms)
     end

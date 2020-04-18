@@ -30,7 +30,8 @@ function Browser.newBrowser(options)
         m_chann = nil, -- one tcp chann
         m_hp = nil, -- hyperparser
         m_left_data = nil, -- left http protocol data
-        m_url_info = nil -- path, host, port
+        m_url_info = nil, -- path, host, port
+        m_callback_index = nil, -- loop callback index
     }
     setmetatable(brw, Browser)
     if not Browser.m_has_init then
@@ -195,8 +196,8 @@ function Browser:openURL(site_url)
     end
     self.m_chann:setCallback(callback)
     self.m_chann:connectAddr(ipv4, port)
-    RpcFramework.setupLoopCallback(
-        self.m_chann,
+    self.m_callback_index =
+        RpcFramework.setupLoopCallback(
         function(event_name)
             self:onLoopEvent(event_name)
         end
@@ -220,7 +221,7 @@ function Browser:closeURL()
     Log:info("-- close URL: %s", self.m_url_info.host)
     if self.m_chann then
         self.m_chann:closeChann()
-        RpcFramework.removeLoopCallback(self.m_chann)
+        RpcFramework.removeLoopCallback(self.m_callback_index)
         self.m_chann = nil
     end
     if self.m_hp then
@@ -238,7 +239,8 @@ function Browser:onLoopEvent(event_name)
             return
         end
     end
-    RpcFramework.removeLoopCallback(self.m_chann)
+    RpcFramework.removeLoopCallback(self.m_callback_index)
+    self.m_callback_index = nil
 end
 
 return Browser
