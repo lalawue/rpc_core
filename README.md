@@ -25,7 +25,7 @@ you can list supported apps just
 ```js
 $ ./run_app.sh
 APP_ENV_CONFIG: not set, use config.app_env instead
-[AppEnv] parse sproto spec config/app_rpc_spec.sproto
+I.[AppEnv] parse sproto spec config/app_rpc_spec.sproto
 supported apps:
         service_dns
         agent_redis

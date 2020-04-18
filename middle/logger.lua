@@ -19,8 +19,8 @@ local _level_name_number = {
    ["error"] = 5
 }
 
-local function printf(fmt, ...)
-   print(string.format(fmt, ...))
+local function tag_printf(tag, fmt, ...)
+   print(tag .. string.format(fmt, ...))
 end
 
 -- 'debug', 'info', 'warn', 'error'
@@ -28,13 +28,18 @@ function Logger.newLogger(tag_name, level_name)
    local logger = setmetatable({}, Logger)
    logger.m_name = tag_name and (tag_name .. " ") or "[Log] "
    logger.m_level = _level_name_number[level_name] or 1
+   local tbl = {}
+   for k, v in pairs(_level_name_number) do
+      tbl[tonumber(v)] = k:sub(1,1):upper() .. "." .. tag_name .. " "
+   end
+   logger.m_tags = tbl
    return logger
 end
 
 function Logger:log(level_name, fmt, ...)
    local number = _level_name_number[level_name] or 5
    if number >= self.m_level then
-      printf(self.m_name .. fmt, ...)
+      tag_printf(self.m_tags[number], fmt, ...)
    end
 end
 

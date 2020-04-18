@@ -15,7 +15,7 @@ local function _tmpDir()
 end
 
 local function _parseSprotoSpec(file_path)
-    print("[AppEnv] parse sproto spec " .. file_path)
+    print("I.[AppEnv] parse sproto spec " .. file_path)
     repeat
         local f = io.open(file_path, "rb")
         if not f then
@@ -32,7 +32,7 @@ local function _parseSprotoSpec(file_path)
         end
         return bin_content
     until false
-    print("[AppEnv] failed to parse sproto spec")
+    print("E.[AppEnv] failed to parse sproto spec")
     os.exit(0)
 end
 
