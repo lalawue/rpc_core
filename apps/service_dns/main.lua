@@ -41,7 +41,7 @@ local DnsCore = ffi.load("mdns")
 local NetCore = require("base.ffi_mnet")
 local UrlCore = require("middle.url")
 local AppFramework = require("middle.app_framework")
-local Log = require("middle.logger").newLogger("[DNS]", "debug")
+local Log = require("middle.logger").newLogger("[DNS]", "info")
 
 --
 -- App
@@ -53,13 +53,73 @@ function App:initialize()
     if not self.m_has_init then
         self.m_has_init = true
         self.m_poll_timeout_ms = 0.2 * 1000000 -- one loop 0.2s
+        self.m_wait_count = 0
         self.m_wait_list = setmetatable({}, {__mode = "v"})
     end
 end
 
+function App:loadBusiness(rpc_framework)
+    -- init udp for query DNS
+    self:initUdpQueryChanns()
+
+    -- init JSON service RPC
+    rpc_framework.newService(
+        AppEnv.Service.DNS_JSON,
+        function(a, b, c)
+            return self:httpJsonServiceHandler(a, b, c)
+        end
+    )
+
+    -- init Sproto service RPC
+    rpc_framework.newService(
+        AppEnv.Service.DNS_SPROTO,
+        function(a, b, c)
+            return self:sprotoServiceHandler(a, b, c)
+        end
+    )
+
+    -- query dns core in loop callback
+    rpc_framework.setupLoopCallback(
+        function(event_name)
+            self:waitListProcess()
+        end
+    )
+end
+
+function App:startBusiness(rpc_framework)
+    -- no coroutine code here
+end
+
+--
+-- Internal
+--
+
+-- UDP DNS Query
+function App:initUdpQueryChanns()
+    local dns_ipv4 = {
+        "8.8.8.8",
+        "8.8.8.4"
+    }
+    local c_udp_channs = ffi.new("chann_t*[?]", #dns_ipv4)
+    for i = 1, 2 do
+        local udp_chann = NetCore.openChann("udp")
+        udp_chann:setCallback(
+            function(_, event_name, _, c_msg)
+                if event_name == "event_recv" then
+                    DnsCore.mdns_store(c_msg)
+                end
+            end
+        )
+        udp_chann:connect(dns_ipv4[i], 53)
+        c_udp_channs[i - 1] = udp_chann.m_chann
+    end
+    -- set C UDP chann to DnsCore
+    DnsCore.mdns_init(c_udp_channs, #dns_ipv4)
+end
+
 local _result = ffi.new("mdns_result_t *")
 
-local function _queryDomainFromDnsCore(domain)
+function App:queryDomainFromDnsCore(domain)
     local dn = ffi.new("char[?]", domain:len() + 1)
     ffi.copy(dn, domain, domain:len())
     _result = DnsCore.mdns_query(dn, domain:len())
@@ -73,61 +133,19 @@ local function _queryDomainFromDnsCore(domain)
     end
 end
 
--- UDP DNS Query
-local function _initUdpQueryInterface()
-    local dns_ipv4 = {
-        "8.8.8.8",
-        "8.8.8.4"
-    }
-    local c_udp_channs = ffi.new("chann_t*[?]", #dns_ipv4)
-    for i = 1, 2 do
-        local udp_chann = NetCore.openChann("udp")
-        udp_chann:connect(dns_ipv4[i], 53)
-        udp_chann:setCallback(
-            function(_, event_name, _, c_msg)
-                if event_name == "event_recv" then
-                    DnsCore.mdns_store(c_msg)
-                end
-            end
-        )
-        c_udp_channs[i - 1] = udp_chann.m_chann
-    end
-    -- set C UDP chann to DnsCore
-    DnsCore.mdns_init(c_udp_channs, #dns_ipv4)
-end
-
-local function _updateWaitingList(self, domain, rpc_response)
-    local success, ip = _queryDomainFromDnsCore(domain)
+function App:processRequest(domain, rpc_response)
+    local success, ip = self:queryDomainFromDnsCore(domain)
     if success and ip then
         rpc_response:sendResponse({ipv4 = ip})
     else
-        self.m_wait_list[domain] = rpc_response
+        self:waitListAdd(domain, rpc_response)
     end
-end
-
--- HTTP JSON service interface
-local function _httpJsonServiceHandler(self, proto_info, reqeust_object, rpc_response)
-    local url = UrlCore.parse(proto_info.url)
-    if tostring(url.query):len() > 0 then
-        for _, domain in pairs(url.query) do
-            -- use whaterver key
-            _updateWaitingList(self, domain, rpc_response)
-            break
-        end
-    elseif reqeust_object["domain"] then
-        -- query with json
-        _updateWaitingList(self, reqeust_object.domain, rpc_response)
-    else
-        Log:error("invalid path or request_object !")
-        return false
-    end
-    return true
 end
 
 -- SPROTO service interface
-local function _sprotoServiceHandler(self, proto_info, reqeust_object, rpc_response)
+function App:sprotoServiceHandler(proto_info, reqeust_object, rpc_response)
     if proto_info and proto_info.name == AppEnv.Service.DNS_SPROTO.name and type(reqeust_object.domain) == "string" then
-        _updateWaitingList(self, reqeust_object.domain, rpc_response)
+        self:processRequest(reqeust_object.domain, rpc_response)
         return true
     else
         Log:error("invalid sproto name %s", proto_info.name)
@@ -135,42 +153,52 @@ local function _sprotoServiceHandler(self, proto_info, reqeust_object, rpc_respo
     end
 end
 
-function App:loadBusiness(rpc_framework)
-    -- init udp for query DNS
-    _initUdpQueryInterface()
-
-    -- init JSON service RPC
-    rpc_framework.newService(
-        AppEnv.Service.DNS_JSON,
-        function(a, b, c)
-            return _httpJsonServiceHandler(self, a, b, c)
+-- HTTP JSON service interface
+function App:httpJsonServiceHandler(proto_info, reqeust_object, rpc_response)
+    local url = UrlCore.parse(proto_info.url)
+    if tostring(url.query):len() > 0 then
+        for _, domain in pairs(url.query) do
+            -- use whaterver key
+            self:processRequest(domain, rpc_response)
+            break
         end
-    )
-
-    -- init Sproto service RPC
-    rpc_framework.newService(
-        AppEnv.Service.DNS_SPROTO,
-        function(a, b, c)
-            return _sprotoServiceHandler(self, a, b, c)
-        end
-    )
-
-    -- setup loop callback
-    rpc_framework.setupLoopCallback(
-        function(event_name)
-            for domain, response in pairs(self.m_wait_list) do
-                local success, ip = _queryDomainFromDnsCore(domain)
-                if success and ip then
-                    response:sendResponse({ipv4 = ip})
-                    self.m_wait_list[domain] = nil
-                end
-            end
-        end
-    )
+    elseif reqeust_object["domain"] then
+        -- query with json
+        self:processRequest(reqeust_object.domain, rpc_response)
+    else
+        Log:error("invalid path or request_object !")
+        return false
+    end
+    return true
 end
 
-function App:startBusiness(rpc_framework)
-    -- no coroutine code here
+function App:waitListAdd(domain, rpc_response)
+    if self.m_wait_list[domain] == nil then
+        self.m_wait_count = self.m_wait_count + 1
+        self.m_wait_list[domain] = rpc_response
+        Log:trace("add wait domain '%s'", domain)
+    end
+end
+
+function App:waitListRemove(domain)
+    if self.m_wait_list[domain] ~= nil then
+        self.m_wait_count = self.m_wait_count - 1
+        self.m_wait_list[domain] = nil
+        Log:trace("remove wait domain '%s'", domain)
+    end
+end
+
+function App:waitListProcess(domain)
+    if self.m_wait_count <= 0 then
+        return
+    end
+    for domain, response in pairs(self.m_wait_list) do
+        local success, ip = self:queryDomainFromDnsCore(domain)
+        if success and ip then
+            response:sendResponse({ipv4 = ip})
+            self:waitListRemove(domain)
+        end
+    end
 end
 
 return App
