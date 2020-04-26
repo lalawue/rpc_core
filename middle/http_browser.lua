@@ -218,7 +218,7 @@ function Browser:postURL(site_url, data)
 end
 
 function Browser:closeURL()
-    Log:info("-- close URL: %s", self.m_url_info.host)
+    Log:info("-- close URL: %s", self.m_url_info and self.m_url_info.host or "empty URL !")
     if self.m_chann then
         self.m_chann:closeChann()
         RpcFramework.removeLoopCallback(self.m_callback_index)
