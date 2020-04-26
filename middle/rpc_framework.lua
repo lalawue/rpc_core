@@ -51,15 +51,13 @@ function Framework.initFramework()
     end
 end
 
-local function _closeServiceChann(service_info, chann, rpc_parser, keep_alive)
-    if rpc_parser then
-        if keep_alive then
-            Log:trace("'%s' keepalive: %s", service_info.name, chann)
-        else
-            Log:trace("'%s' disconnect: %s", service_info.name, chann)
-            chann:close()
-            rpc_parser:destroy()
-        end
+local function _closeChannAndParser(service_info, chann, rpc_parser, keep_alive)
+    if keep_alive then
+        Log:trace("'%s' keepalive: %s", service_info.name, chann)
+    elseif chann and rpc_parser then
+        Log:trace("'%s' disconnect: %s", service_info.name, chann)
+        chann:close()
+        rpc_parser:destroy()
     end
 end
 
@@ -85,30 +83,29 @@ function Framework.newService(service_info, service_handler)
             local rpc_parser = RpcParser.newRequest(service_info)
             accept:setCallback(
                 function(chann, event_name, _, _)
-                    local to_close_chann = false
+                    local to_close = false
                     if event_name == "event_recv" then
                         local data = chann:recv()
                         if data then
                             local ret, proto_info, request_object = rpc_parser:process(data)
                             if ret < 0 then
-                                to_close_chann = true
+                                to_close = true
                             elseif proto_info then
                                 local rpc_response = RpcResponse.new(chann, service_info)
-                                to_close_chann = not service_handler(proto_info, request_object, rpc_response)
+                                to_close = not service_handler(proto_info, request_object, rpc_response)
                             end
                         else
-                            to_close_chann = true
+                            to_close = true
                         end
                     elseif event_name == "event_disconnect" then
-                        to_close_chann = true
+                        to_close = true
                     end
 
-                    if to_close_chann then
-                        _closeServiceChann(service_info, chann, rpc_parser)
-                        rpc_parser = nil
+                    if to_close then
+                        _closeChannAndParser(service_info, chann, rpc_parser, false)
                     end
                 end
-            )
+            ) -- callback
         end
     )
 
@@ -123,7 +120,7 @@ end
         timeout = seconds,
         ipv4 = service_ipv4,
         keep_alive = keep_tcp_connection,
-        reuse_info = connection_info of last newRequest return value,
+        reuse_info = connection_info modified by framework
     }
 ]]
 function Framework.newRequest(service_info, option_args, path_args, body_args)
@@ -137,15 +134,17 @@ function Framework.newRequest(service_info, option_args, path_args, body_args)
         return false
     end
 
-    local rpc_parser = RpcParser.newResponse(service_info)
+    -- reuse chann or create new one, assume service_info are the same
     local chann = option_args.reuse_info or NetCore.openChann("tcp")
+
     if chann:state() == "state_connected" then
         Log:trace("'%s' reuseinfo: %s", service_info.name, chann)
         local request = RpcDial.new()
         request:callMethod(service_info, nil, path_args, body_args)
-        local data = request:makePackage()
-        chann:send(data)
+        chann:send(request:makePackage())
     else
+        -- create new chann then create new parser
+        local rpc_parser = RpcParser.newResponse(service_info)
         local callback = function(chann, event_name, _, _)
             local to_resume = nil
             local ret_object = nil
@@ -153,11 +152,9 @@ function Framework.newRequest(service_info, option_args, path_args, body_args)
                 Log:trace("'%s' connected: %s", service_info.name, chann)
                 local request = RpcDial.new()
                 request:callMethod(service_info, nil, path_args, body_args)
-                local data = request:makePackage()
-                chann:send(data)
+                chann:send(request:makePackage())
             elseif event_name == "event_recv" then
-                local data = chann:recv()
-                local ret, proto, response_object = rpc_parser:process(data)
+                local ret, proto, response_object = rpc_parser:process(chann:recv())
                 if ret < 0 then
                     to_resume = false
                 elseif proto then
@@ -169,11 +166,9 @@ function Framework.newRequest(service_info, option_args, path_args, body_args)
             end
 
             if to_resume ~= nil then
-                _closeServiceChann(service_info, chann, rpc_parser, option_args.keep_alive)
-                if not option_args.keep_alive then
-                    rpc_parser = nil
-                end
-                coroutine.resume(thread, to_resume, ret_object, chann)
+                _closeChannAndParser(service_info, chann, rpc_parser, option_args.keep_alive)
+                option_args.reuse_info = option_args.keep_alive and chann or nil
+                coroutine.resume(thread, to_resume, ret_object)
             end
         end
         chann:setCallback(callback)
