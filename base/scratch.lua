@@ -55,3 +55,29 @@ io.printf = function(fmt, ...)
     end
     print(string.format(fmt, ...))
 end
+
+Lang = {}
+
+local function isAllType(name, ...)
+    for i = 1, 65536, 1 do
+        local input = select(i, ...)
+        if input == nil then
+            break
+        elseif type(input) ~= name then
+            return false
+        end
+    end
+    return true
+end
+
+function Lang.isString(...)
+    return isAllType("string", ...)
+end
+
+function Lang.isTable(...)
+    return isAllType("table", ...)
+end
+
+function Lang.isFunction(...)
+    return isAllType("function", ...)
+end
