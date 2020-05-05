@@ -11,19 +11,19 @@ if [ ! -d $BINARIES_DIR ]; then
 fi
 
 # LuaJIT path
-LUA_PATH="?.lua;middle/?.lua;"
+export LUA_PATH="?.lua;middle/?.lua;"
 
 # system library and Lua library path
 if [ "$(uname)" = "Darwin" ]; then
-    LIB_PATH=$BINARIES_DIR:$LOCAL_DIR/lib
-    LUA_CPATH=$BINARIES_DIR/lib?.dylib
+    export DYLD_LIBRARY_PATH=$BINARIES_DIR:$LOCAL_DIR/lib
+    export LUA_CPATH=$BINARIES_DIR/lib?.dylib
 
     # luajit invoke
-    env DYLD_LIBRARY_PATH=$LIB_PATH LUA_CPATH=$LUA_CPATH LUA_PATH=$LUA_PATH luajit app_launcher.lua $*    
+    exec luajit app_launcher.lua $*
 else
-    LIB_PATH=$BINARIES_DIR:$LOCAL_DIR/lib:/usr/lib:/usr/local/lib
-    LUA_CPATH=$BINARIES_DIR/lib?.so
+    export LD_LIBRARY_PATH=$BINARIES_DIR:$LOCAL_DIR/lib:/usr/lib:/usr/local/lib
+    export LUA_CPATH=$BINARIES_DIR/lib?.so
 
     # luajit invoke
-    env LD_LIBRARY_PATH=$LIB_PATH LUA_CPATH=$LUA_CPATH LUA_PATH=$LUA_PATH luajit app_launcher.lua $*    
+    exec luajit app_launcher.lua $*
 fi
