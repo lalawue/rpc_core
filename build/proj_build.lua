@@ -105,7 +105,18 @@ local Build = {
             dir_name,
             dir_name
         )
+        local git_update_cmd = "git pull origin master"
+        local update_cmd =
+            fmt(
+            "if [ -d '%s' ]; then cd %s; make clean; %s; cd vendor/m_foundation/; %s; cd ../m_net; %s; fi;",
+            dir_name,
+            dir_name,
+            git_update_cmd,
+            git_update_cmd,
+            git_update_cmd
+        )
         local make_cmd = fmt("cd %s; if [ ! -f 'build/%s' ]; then %s; fi; ", dir_name, self:binaryName(name), self.MAKE)
+        self:runCmd(update_cmd)
         self:runCmd(clone_cmd)
         self:runCmd(make_cmd)
         local binaries = {"mfoundation", "mnet", "mdns"}
