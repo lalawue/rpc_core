@@ -174,16 +174,6 @@ local Build = {
         self:runCmd(copy_binary)
         print("-- end -- \n")
     end,
-    prepareThuLacLibrary = function(self, dir_name, name)
-        print("-- begin build THULAC -- ")
-        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/THULAC.git; fi;", dir_name)
-        local make_cmd = fmt("cd %s; if [ ! -f 'lib%s.so' ]; then %s; fi; ", dir_name, name, self.MAKE)
-        local copy_binary = fmt("cd %s; cp lib%s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
-        self:runCmd(clone_cmd)
-        self:runCmd(make_cmd)
-        self:runCmd(copy_binary)
-        print("-- end -- \n")
-    end,
     prepareOpenSSLLibrary = function(self, tar_name, dir_name)
         print("-- begin download and build OpenSSL -- ")
         local download_cmd =
@@ -246,6 +236,5 @@ Build:prepareDnsLibrary("m_dnscnt", "mdns")
 Build:prepareSprotoLibrary("sproto", "sproto")
 Build:prepareLpegLibrary("lpeg", "lpeg")
 Build:prepareLuaRedisClientLibrary("lua-resp", "resp")
-Build:prepareThuLacLibrary("THULAC", "thulac")
 Build:prepareOpenSSLLibrary("OpenSSL_1_1_1d.tar.gz", "openssl-OpenSSL_1_1_1d")
 Build:prepareLuaOpenSSLLibrary("lua-openssl", "openssl")

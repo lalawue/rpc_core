@@ -17,6 +17,14 @@ $ sh proj_build.sh
 ```
 waits clone, build, then copy binaries finish, or you can download pre-compiled binaries in [release](https://github.com/lalawue/m_rpc_framework/releases).
 
+by the way, you can use your own build script as proj_build.lua, run as
+
+```js
+$ export LUA_JIT_INCLUDE_PATH=/usr/local/include/luajit-2.1
+$ cd build
+$ sh proj_build.sh YOUR_BUILD_SCRIPT.lua
+```
+
 
 # Launch App
 
