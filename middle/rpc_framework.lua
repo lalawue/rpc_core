@@ -197,13 +197,13 @@ function Framework.setupLoopCallback(callback)
     return #AllLoopCallbackTable -- callback index
 end
 
-function Framework.pollForever(timeout_millisecond)
-    timeout_millisecond = timeout_millisecond and tonumber(timeout_millisecond) or 1000
+function Framework.pollForever(timeout_second)
+    local millisecond = timeout_second and (tonumber(timeout_second) * 1000) or 1000
     while true do
         for _, callback in ipairs(AllLoopCallbackTable) do
             callback("event_loop")
         end
-        NetCore.poll(timeout_millisecond)
+        NetCore.poll(millisecond)
     end
 end
 
