@@ -62,12 +62,12 @@ local function isAllType(name, ...)
     for i = 1, 65536, 1 do
         local input = select(i, ...)
         if input == nil then
-            break
+            return i > 1
         elseif type(input) ~= name then
             return false
         end
     end
-    return true
+    return false
 end
 
 function Lang.isString(...)
