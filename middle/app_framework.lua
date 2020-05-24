@@ -28,7 +28,7 @@ function App:launch()
       end
    )
    coroutine.resume(co)
-   RpcFramework.pollForever(self.m_poll_timeout_ms)
+   RpcFramework.pollForever(self.m_poll_millisecond)
 end
 
 --

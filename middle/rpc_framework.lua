@@ -174,7 +174,7 @@ function Framework.newRequest(service_info, option_args, path_args, body_args)
         chann:setCallback(callback)
         --Log:debug("try connect %s", option_args.ipv4 or service_info.ipv4)
         chann:connect(option_args.ipv4 or service_info.ipv4, service_info.port)
-        chann:activeEvent("event_timer", tonumber(option_args.timeout or AppEnv.Config.RPC_TIMEOUT) * 1000000)
+        chann:activeEvent("event_timer", tonumber(option_args.timeout or AppEnv.Config.RPC_TIMEOUT) * 1000)
     end
     return coroutine.yield() -- yeild recv or disconnect
 end
@@ -197,13 +197,13 @@ function Framework.setupLoopCallback(callback)
     return #AllLoopCallbackTable -- callback index
 end
 
-function Framework.pollForever(timeout_ms)
-    timeout_ms = timeout_ms and tonumber(timeout_ms) or 1000000
+function Framework.pollForever(timeout_millisecond)
+    timeout_millisecond = timeout_millisecond and tonumber(timeout_millisecond) or 1000
     while true do
         for _, callback in ipairs(AllLoopCallbackTable) do
             callback("event_loop")
         end
-        NetCore.poll(timeout_ms)
+        NetCore.poll(timeout_millisecond)
     end
 end
 
