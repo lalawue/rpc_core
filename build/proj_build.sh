@@ -20,7 +20,7 @@ which_program $LUA_JIT
 if [ "$(basename $PWD)" = "build" ]; then
     export MACOSX_DEPLOYMENT_TARGET=10.14
     mkdir -p "../binaries/$(uname)"
-    if [ -n $1 ]; then
+    if [ -n "$1" ]; then
         echo "use privide build script $1"
         sleep 1
         $LUA_JIT $1 $PWD $(uname)
