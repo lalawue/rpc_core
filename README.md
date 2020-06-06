@@ -209,6 +209,7 @@ Thanks people provide libraries below:
 - [cloudwu/sproto](https://github.com/cloudwu/sproto), Yet another protocol library like google protocol buffers , but simple and fast.
 - [lpeg](https://github.com/LuaDist/lpeg), Parsing Expression Grammars For Lua
 - [mah0x211/lua-resp](https://github.com/mah0x211/lua-resp), RESP (REdis Serialization Protocol) parser for lua
+- [slembcke/debugger.lua](https://github.com/slembcke/debugger.lua), A simple, embedabble CLI debugger for Lua.
 - [m_net](https://github.com/lalawue/m_net)
 - [m_foundation](https://github.com/lalawue/m_foundation)
 - [m_dnscnt](https://github.com/lalawue/m_dnscnt)
