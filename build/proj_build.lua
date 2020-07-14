@@ -56,7 +56,7 @@ local Build = {
         print("-- begin build cjson -- ")
         local c_sources = "lua_cjson.c strbuf.c fpconv.c"
         local clone_cmd =
-            fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lua-cjson.git; fi; ", dir_name)
+            fmt("if [ ! -d '%s' ]; then git clone https://github.com/openresty/lua-cjson.git; fi; ", dir_name)
         local make_cmd =
             fmt(
             "cd %s; if [ ! -f '%s.so' ]; then %s %s %s -o %s.so -I%s -L%s -l%s; fi;",
