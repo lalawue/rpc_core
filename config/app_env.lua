@@ -50,12 +50,12 @@ AppEnv.Prototols = {
     TCP_RAW = "TCP_RAW", -- raw data in TCP, with 2 bytes length ahead
     HTTP_JSON = "HTTP_JSON", -- JSON in HTTP body
     LUA_SPROTO = "LUA_SPROTO", -- https://github.com/cloudwu/sproto, like protobuf, with 2 bytes length ahead
-    REDIS_SPROTO = "REDIS_SPROTO" -- Redis Protocol specification
+    LUA_RESP = "LUA_RESP" -- Redis Protocol specification 2
 }
 
 AppEnv.Store = {
     -- parse sproto spec first
-    [AppEnv.Prototols.LUA_SPROTO] = _parseSprotoSpec("config/app_rpc_spec.sproto")
+    [AppEnv.Prototols.LUA_SPROTO] = _parseSprotoSpec("config/rpc_spec.sproto")
 }
 
 -- service info for publisher or caller
@@ -73,9 +73,9 @@ AppEnv.Service = {
         ipv4 = AppEnv.Config.LOOP_IPV4,
         port = 10054
     },
-    REDIS_SPROTO = {
-        name = "redis_sproto",
-        proto = AppEnv.Prototols.REDIS_SPROTO,
+    LUA_RESP = {
+        name = "resp_v2",
+        proto = AppEnv.Prototols.LUA_RESP,
         ipv4 = AppEnv.Config.LOOP_IPV4,
         port = 6379
     }

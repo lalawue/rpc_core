@@ -8,7 +8,7 @@
 local TcpRaw = require("rpc_framework.rpc_parser.tcp_raw")
 local HttpJson = require("rpc_framework.rpc_parser.http_json")
 local LuaSproto = require("rpc_framework.rpc_parser.lua_sproto")
-local RedisSproto = require("rpc_framework.rpc_parser.redis_sproto")
+local LuaResp = require("rpc_framework.rpc_parser.lua_resp")
 local Log = require("middle.logger").newLogger("[RPC]", "debug")
 
 local RpcParser = {
@@ -21,7 +21,7 @@ local _all_parsers = {
     [AppEnv.Prototols.TCP_RAW] = TcpRaw,
     [AppEnv.Prototols.HTTP_JSON] = HttpJson,
     [AppEnv.Prototols.LUA_SPROTO] = LuaSproto,
-    [AppEnv.Prototols.REDIS_SPROTO] = RedisSproto,
+    [AppEnv.Prototols.LUA_RESP] = LuaResp,
 }
 
 function RpcParser.newRequest(rpc_info)

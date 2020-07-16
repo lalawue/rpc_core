@@ -8,7 +8,7 @@
 local TcpRaw = require("rpc_framework.rpc_dial.tcp_raw")
 local HttpJson = require("rpc_framework.rpc_dial.http_json")
 local LuaSproto = require("rpc_framework.rpc_dial.lua_sproto")
-local RedisSproto = require("rpc_framework.rpc_dial.redis_sproto")
+local LuaResp = require("rpc_framework.rpc_dial.lua_resp")
 local Log = require("middle.logger").newLogger("[RPC]", "error")
 
 local RpcDial = {}
@@ -28,7 +28,7 @@ local _all_dials = {
     [AppEnv.Prototols.TCP_RAW] = TcpRaw,
     [AppEnv.Prototols.HTTP_JSON] = HttpJson,
     [AppEnv.Prototols.LUA_SPROTO] = LuaSproto,
-    [AppEnv.Prototols.REDIS_SPROTO] = RedisSproto,
+    [AppEnv.Prototols.LUA_RESP] = LuaResp,
 }
 
 -- rpc_args will encode as path in HTTP_JSON psec

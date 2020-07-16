@@ -13,7 +13,7 @@ local App = Class("AgentRedis", AppFramework)
 
 function App:initialize(app_name)
     self.m_app_name = app_name
-    local protocol = AppEnv.Service.REDIS_SPROTO
+    local protocol = AppEnv.Service.LUA_RESP
     Log:info("init %s, try to connect '%s:%d'", app_name, protocol.ipv4, protocol.port)
 end
 
@@ -23,7 +23,7 @@ end
 
 function App:startBusiness(rpc_framework)
     local newRequest = rpc_framework.newRequest
-    local PROTOCOL = AppEnv.Service.REDIS_SPROTO
+    local PROTOCOL = AppEnv.Service.LUA_RESP
     local opt = {timeout = AppEnv.Config.RPC_TIMEOUT, keep_alive = true}
 
     local ret = nil
