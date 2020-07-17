@@ -56,7 +56,7 @@ local Build = {
         print("-- begin build cjson -- ")
         local c_sources = "lua_cjson.c strbuf.c fpconv.c"
         local clone_cmd =
-            fmt("if [ ! -d '%s' ]; then git clone https://github.com/openresty/lua-cjson.git; fi; ", dir_name)
+            fmt("if [ ! -d '%s' ]; then git clone https://github.com/openresty/lua-cjson.git --depth 1; fi; ", dir_name)
         local make_cmd =
             fmt(
             "cd %s; if [ ! -f '%s.so' ]; then %s %s %s -o %s.so -I%s -L%s -l%s; fi;",
@@ -80,7 +80,7 @@ local Build = {
         print("-- begin build hyperparser -- ")
         local c_sources = "src/http_parser.c src/pull_style_api.c -Isrc"
         local clone_cmd =
-            fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/hyperparser.git; fi;", dir_name)
+            fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/hyperparser.git --depth 1; fi;", dir_name)
         local make_cmd =
             fmt(
             "cd %s; if [ ! -f '%s.so' ]; then %s %s %s -o %s.so ; fi; ",
@@ -101,7 +101,7 @@ local Build = {
         print("-- begin build mdns -- ")
         local clone_cmd =
             fmt(
-            "if [ ! -d '%s' ]; then git clone https://github.com/lalawue/m_dnscnt.git; cd %s; git submodule update --init --recursive; fi;",
+            "if [ ! -d '%s' ]; then git clone https://github.com/lalawue/m_dnscnt.git --depth 1; cd %s; git submodule update --depth 1 --init --recursive; fi;",
             dir_name,
             dir_name
         )
@@ -129,7 +129,7 @@ local Build = {
     end,
     prepareSprotoLibrary = function(self, dir_name, name)
         print("-- begin build sproto -- ")
-        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/sproto.git; fi;", dir_name)
+        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/sproto.git --depth 1; fi;", dir_name)
         local make_cmd =
             fmt(
             "cd %s; if [ ! -f '%s' ]; then %s LUA_JIT_INCLUDE_PATH=%s; fi; ",
@@ -146,7 +146,7 @@ local Build = {
     end,
     prepareLpegLibrary = function(self, dir_name, name)
         print("-- begin build lpeg -- ")
-        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lpeg.git; fi;", dir_name)
+        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lpeg.git --depth 1; fi;", dir_name)
         local make_cmd =
             fmt(
             "cd %s; if [ ! -f '%s' ]; then %s LUA_JIT_INCLUDE_PATH=%s; fi; ",
@@ -166,7 +166,7 @@ local Build = {
         local inc_dir = "-Isrc -I" .. self.INCPTH
         local c_sources = "src/lauxhlib.c src/resp.c "
         local c_compile = fmt("%s %s %s -l%s %s", self.CC, self.CFLAGS, inc_dir, self.LIBNAME, c_sources)
-        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lua-resp.git; fi;", dir_name)
+        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lua-resp.git --depth 1; fi;", dir_name)
         local make_cmd = fmt("cd %s; if [ ! -f '%s.so' ]; then %s -o %s.so ; fi; ", dir_name, name, c_compile, name)
         local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name, true))
         self:runCmd(clone_cmd)
@@ -200,7 +200,7 @@ local Build = {
     prepareLuaOpenSSLLibrary = function(self, dir_name, name)
         print("-- begin build lua-openssl -- ")
         local clone_cmd =
-            fmt("if [ ! -d '%s' ]; then git clone --recurse https://github.com/zhaozg/lua-openssl.git; fi;", dir_name)
+            fmt("if [ ! -d '%s' ]; then git clone --recurse https://github.com/zhaozg/lua-openssl.git --depth 1; fi;", dir_name)
         local make_cmd =
             fmt(
             "cd %s; if [ ! -f '%s.so' ]; then export PKG_CONFIG_PATH=%s; make; fi; ",
