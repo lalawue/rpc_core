@@ -17,13 +17,10 @@ export LUA_PATH="?.lua;middle/?.lua;"
 if [ "$(uname)" = "Darwin" ]; then
     export DYLD_LIBRARY_PATH=$BINARIES_DIR:$LOCAL_DIR/lib
     export LUA_CPATH=$BINARIES_DIR/lib?.dylib
-
-    # luajit invoke
-    exec luajit app_launcher.lua $*
 else
     export LD_LIBRARY_PATH=$BINARIES_DIR:$LOCAL_DIR/lib:/usr/lib:/usr/local/lib
     export LUA_CPATH=$BINARIES_DIR/lib?.so
-
-    # luajit invoke
-    exec luajit app_launcher.lua $*
 fi
+
+# luajit invoke
+exec luajit app_launcher.lua $*
