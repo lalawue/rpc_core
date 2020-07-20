@@ -33,7 +33,7 @@ function Parser:process(data)
         data = self.m_left_data .. data
         self.m_left_data = nil
     end
-    local ret_value, state, header_tbl = self.m_hp:process(data)
+    local ret_value, state, http_tbl = self.m_hp:process(data)
     if ret_value < 0 then
         return ret_value
     end
@@ -42,15 +42,15 @@ function Parser:process(data)
     end
     local proto_info = nil
     local json_object = nil
-    if state == HttpParser.STATE_BODY_FINISH and header_tbl then
-        if header_tbl.contents then
-            local content = table.concat(header_tbl.contents)
-            header_tbl.contents = nil
+    if state == HttpParser.STATE_BODY_FINISH and http_tbl then
+        if http_tbl.contents then
+            local content = table.concat(http_tbl.contents)
+            http_tbl.contents = nil
             json_object = CJson.decode(content)
         else
             json_object = {}
         end
-        proto_info = header_tbl
+        proto_info = http_tbl
     end
     return ret_value, proto_info, json_object
 end
