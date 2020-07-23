@@ -10,7 +10,6 @@ local HttpParser = require("middle.ffi_hyperparser")
 
 local Parser = {
     m_hp = nil, -- hyperparser
-    m_left_data = nil
 }
 Parser.__index = Parser
 
@@ -29,16 +28,9 @@ end
 -- return ret_value, proto_info, data_table
 -- the proto_info would be http_header_table
 function Parser:process(data)
-    if self.m_left_data then
-        data = self.m_left_data .. data
-        self.m_left_data = nil
-    end
     local ret_value, state, http_tbl = self.m_hp:process(data)
     if ret_value < 0 then
         return ret_value
-    end
-    if ret_value > 0 and ret_value < data:len() then
-        self.m_left_data = data:sub(ret_value + 1)
     end
     local proto_info = nil
     local json_object = nil
@@ -60,7 +52,6 @@ function Parser:destroy()
         self.m_hp:destroy()
         self.m_hp = nil
     end
-    self.m_left_data = nil
 end
 
 return Parser

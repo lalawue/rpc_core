@@ -29,7 +29,6 @@ function Browser.newBrowser(options)
         m_options = options, -- options like { inflate = true }
         m_chann = nil, -- one tcp chann
         m_hp = nil, -- hyperparser
-        m_left_data = nil, -- left http protocol data
         m_url_info = nil, -- path, host, port
         m_callback_index = nil, -- loop callback index
     }
@@ -77,16 +76,9 @@ local function _buildHttpRequest(method, url_info, options, data)
 end
 
 local function _processRecvData(brw, data)
-    if brw.m_left_data then
-        data = brw.m_left_data .. data
-        brw.m_left_data = nil
-    end
     local ret, state, http_tbl = brw.m_hp:process(data)
     if ret < 0 then
         return ret
-    end
-    if ret > 0 and ret < data:len() then
-        brw.m_left_data = data:sub(ret + 1)
     end
     return ret, state, http_tbl
 end
@@ -228,7 +220,6 @@ function Browser:closeURL()
         self.m_hp:destroy()
         self.m_hp = nil
     end
-    self.m_left_data = nil
     self.m_url_info = nil
 end
 
