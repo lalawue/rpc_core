@@ -47,25 +47,34 @@ function Test:startBusiness(rpc_framework)
     self.m_url_info = url_info
     Log:info("-- newReqeust Service.DNS_JSON with URL %s", self.m_url)
 
-    Log:info("get ip from host '%s'", url_info.host)
-    local timeout_second = AppEnv.Config.RPC_TIMEOUT
-    local path_args = {["domain"] = url_info.host} -- use HTTP path query string, whatever key
+    if type(url_info.host) ~= "string" then
+        Log:error("invalid host")
+    end
 
-    local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, path_args)
-    Log:info("DNS_JSON with path_args result %s", success)
+    -- only query domain DNS
+    if url_info.host:find("%d-.%d-.%d-.%d-") then
+        Log:info("open ipv4 with host: %s", url_info.host)
+    else
+        Log:info("get ip from host '%s'", url_info.host)
+        local timeout_second = AppEnv.Config.RPC_TIMEOUT
+        local path_args = {["domain"] = url_info.host} -- use HTTP path query string, whatever key
 
-    success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, nil, path_args)
-    Log:info("DNS_JSON with body_args result %s", success)
+        local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, path_args)
+        Log:info("DNS_JSON with path_args result %s", success)
 
-    success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, {timeout = timeout_second}, path_args)
-    Log:info("LUA_SPROTO with path_args result %s", success)
+        success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, nil, path_args)
+        Log:info("DNS_JSON with body_args result %s", success)
 
-    success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, {timeout = timeout_second}, nil, path_args)
-    Log:info("LUA_SPROTO with body_args result %s", success)
+        success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, {timeout = timeout_second}, path_args)
+        Log:info("LUA_SPROTO with path_args result %s", success)
 
-    if not success then
-        Log:error("failed to get ip from '%s'", url_info.host)
-        os.exit(0)
+        success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, {timeout = timeout_second}, nil, path_args)
+        Log:info("LUA_SPROTO with body_args result %s", success)
+
+        if not success then
+            Log:error("failed to get ip from '%s'", url_info.host)
+            os.exit(0)
+        end
     end
 
     Log:info("open browser with %s", self.m_url)

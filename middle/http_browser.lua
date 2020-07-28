@@ -30,7 +30,7 @@ function Browser.newBrowser(options)
         m_chann = nil, -- one tcp chann
         m_hp = nil, -- hyperparser
         m_url_info = nil, -- path, host, port
-        m_callback_index = nil, -- loop callback index
+        m_callback_index = nil -- loop callback index
     }
     setmetatable(brw, Browser)
     if not Browser.m_has_init then
@@ -135,19 +135,28 @@ function Browser:openURL(site_url)
     self.m_url_info = url_info
     Log:info("-- openURL %s", site_url)
 
-    local timeout_second = self.m_options.timeout or AppEnv.Config.RPC_TIMEOUT
-    local path_args = {["domain"] = url_info.host} -- use HTTP path query string, whatever key
+    local ipv4 = nil
+    local port = nil
+    local ipv4_pattern = "%d-%.%d-%.%d-%.%d+"
+    if url_info.host:find(ipv4_pattern) then
+        ipv4 = url_info.host:match("(" .. ipv4_pattern .. ")")
+        port = url_info.port
+    else
+        local timeout_second = self.m_options.timeout or AppEnv.Config.RPC_TIMEOUT
+        local path_args = {["domain"] = url_info.host} -- use HTTP path query string, whatever key
 
-    local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, path_args)
-    if not success then
-        Log:error("failed to dns '%s'", url_info.host)
-        table.dump(datas)
-        return false
+        local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, path_args)
+        if not success then
+            Log:error("failed to dns '%s'", url_info.host)
+            table.dump(datas)
+            return false
+        end
+
+        datas = #datas > 0 and datas[1] or datas
+        ipv4 = datas["ipv4"]
+        port = url_info.port
     end
 
-    datas = #datas > 0 and datas[1] or datas
-    local ipv4 = datas["ipv4"]
-    local port = url_info.port
     if url_info.scheme == "http" then
         self.m_chann = TcpRaw.openChann()
         port = port and tonumber(port) or 80
