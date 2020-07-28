@@ -89,7 +89,7 @@ local function _constructContent(http_tbl, options)
     local output_content = nil
     local encoding_desc = http_tbl.header["Content-Encoding"] or http_tbl.header["content-encoding"]
     if encoding_desc == "gzip" and options.inflate then
-        output_content = FileManager.inflateData(input_content)
+        output_content = FileManager.inflate(input_content)
     else
         output_content = input_content
     end

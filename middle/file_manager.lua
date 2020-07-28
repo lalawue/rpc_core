@@ -21,7 +21,7 @@ function FileManager.stat(path)
 end
 
 -- save data to path
-function FileManager.saveFilePath(file_path, data)
+function FileManager.saveFile(file_path, data)
    local f = io.open(file_path, "wb")
    if f then
       f:write(data)
@@ -31,7 +31,7 @@ function FileManager.saveFilePath(file_path, data)
    return false
 end
 
-function FileManager.readAllContent(file_path)
+function FileManager.readFile(file_path)
    local f = io.open(file_path, "rb")
    if f then
       local data = f:read("*a")
@@ -41,7 +41,25 @@ function FileManager.readAllContent(file_path)
    return nil
 end
 
-function FileManager.inflateData(input_content)
+function FileManager.appendFile(file_path, data)
+    local f = io.open(file_path, "a+")
+    if f then
+        f:write(data)
+        f:close()
+        return true
+    end
+    return false
+end
+
+function FileManager.removeFile(file_path)
+    os.remove(file_path)
+end
+
+function FileManager.renameFile(oldname, newname)
+    os.rename(oldname, newname)
+end
+
+function FileManager.inflate(input_content)
    if type(input_content) ~= "string" then
       return nil
    end
@@ -64,7 +82,7 @@ function FileManager.inflateData(input_content)
    return table.concat(tbl)
 end
 
-function FileManager.deflateData(data)
+function FileManager.deflate(data)
    Log:error("not supported now")
 end
 

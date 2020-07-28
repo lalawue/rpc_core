@@ -86,7 +86,7 @@ function Test:startBusiness(rpc_framework)
         table.dump(http_header)
         Log:info("content length: %d", content:len())
         if type(self.m_store_file_name) == "string" and self.m_store_file_name:len() > 0 then
-            FileManager.saveFilePath(self.m_store_file_name, content)
+            FileManager.saveFile(self.m_store_file_name, content)
         end
     else
         Log:info("failed to get result")
