@@ -52,7 +52,7 @@ function Test:startBusiness(rpc_framework)
     end
 
     -- only query domain DNS
-    if url_info.host:find("%d-.%d-.%d-.%d-") then
+    if url_info.host:find("%d-%.%d-%.%d-%.%d+") then
         Log:info("open ipv4 with host: %s", url_info.host)
     else
         Log:info("get ip from host '%s'", url_info.host)
