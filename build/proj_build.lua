@@ -25,7 +25,7 @@ local Build = {
     INCPTH = os.getenv("LUA_JIT_INCLUDE_PATH") or "/usr/local/include/luajit-2.0/",
     LIBPATH = os.getenv("LD_LIBRARY_PATH") or os.getenv("DYLD_LIBRARY_PATH") or "/usr/local/lib",
     LIBNAME = os.getenv("LUA_JIT_LIBRARY_NAME") or "luajit-5.1",
-    LOCALPATH = os.getenv("PWD") .. "/../binaries/Local", -- store to binaries
+    PKGPATH = os.getenv("PKG_CONFIG_PATH"),
     --
     --
     setupToolchain = function(self)
@@ -174,29 +174,6 @@ local Build = {
         self:runCmd(copy_binary)
         print("-- end -- \n")
     end,
-    prepareOpenSSLLibrary = function(self, tar_name, dir_name)
-        print("-- begin download and build OpenSSL -- ")
-        local download_cmd =
-            fmt(
-            "if [ ! -f '%s' ]; then curl -L -o %s https://github.com/openssl/openssl/archive/%s ; fi;",
-            tar_name,
-            tar_name,
-            tar_name
-        )
-        local unpack_cmd = fmt("if [ ! -d '%s' ]; then tar xzf %s ; fi", dir_name, tar_name)
-        local make_cmd =
-            fmt(
-            "if [ ! -f '%s' ]; then mkdir -p %s; cd %s; ./config --prefix=%s; make install; fi",
-            self.LOCALPATH .. "/bin/openssl",
-            self.LOCALPATH,
-            dir_name,
-            self.LOCALPATH
-        )
-        self:runCmd(download_cmd)
-        self:runCmd(unpack_cmd)
-        self:runCmd(make_cmd)
-        print("-- end -- \n")
-    end,
     prepareLuaOpenSSLLibrary = function(self, dir_name, name)
         print("-- begin build lua-openssl -- ")
         local clone_cmd =
@@ -206,7 +183,7 @@ local Build = {
             "cd %s; if [ ! -f '%s.so' ]; then export PKG_CONFIG_PATH=%s; make; fi; ",
             dir_name,
             name,
-            self.LOCALPATH .. "/lib/pkgconfig"
+            self.PKGPATH
         )
         local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
         self:runCmd(clone_cmd)
@@ -226,7 +203,7 @@ print("CFLAGS: \t", Build.CFLAGS)
 print("LUA_JIT_INCLUDE_PATH: ", Build.INCPTH)
 print("LD_LIBRARY_PATH: ", Build.LIBPATH)
 print("LUA_JIT_LIBRARY_NAME: ", Build.LIBNAME)
-print("LOCAL_LIBARY_PATH: ", Build.LOCALPATH)
+print("PKG_CONFIG_PATH: ", Build.PKGPATH)
 print("\n--- prepare to build\n")
 os.execute("sleep 3")
 
@@ -236,5 +213,4 @@ Build:prepareDnsLibrary("m_dnscnt", "mdns")
 Build:prepareSprotoLibrary("sproto", "sproto")
 Build:prepareLpegLibrary("lpeg", "lpeg")
 Build:prepareLuaRedisClientLibrary("lua-resp", "resp")
-Build:prepareOpenSSLLibrary("OpenSSL_1_1_1d.tar.gz", "openssl-OpenSSL_1_1_1d")
 Build:prepareLuaOpenSSLLibrary("lua-openssl", "openssl")
