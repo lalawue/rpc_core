@@ -79,10 +79,13 @@ function App:loadBusiness(rpc_framework)
     )
 
     -- query dns core in loop callback
-    rpc_framework.setupLoopCallback(
-        function(event_name)
+    rpc_framework.setLoopEvent(
+        tostring(self),
+        function()
             self:waitListProcess()
-        end
+            return false
+        end,
+        nil
     )
 end
 

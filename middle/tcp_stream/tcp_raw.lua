@@ -15,8 +15,7 @@ local Log = require("middle.logger").newLogger("[TcpRaw]", "error")
 local ChannRaw = {
     m_options = nil,
     m_chann = nil,
-    m_callback = nil,
-    m_read_fifo = ""
+    m_callback = nil
 }
 ChannRaw.__index = ChannRaw
 
@@ -60,11 +59,7 @@ function ChannRaw:setCallback(callback)
             if event_name == "event_connected" then
                 self.m_callback(self, event_name, accept_chann, c_msg)
             elseif event_name == "event_recv" then
-                local data = chann:recv()
-                if data then
-                    self.m_read_fifo = self.m_read_fifo .. data
-                    self.m_callback(self, event_name, nil, c_msg)
-                end
+                self.m_callback(self, event_name, nil, c_msg)
             elseif event_name == "event_send" then
                 self.m_callback(self, event_name, nil, c_msg)
             elseif event_name == "event_disconnect" then
@@ -86,14 +81,11 @@ end
 
 function ChannRaw:recv()
     if self.m_chann and self.m_chann:state() == "state_connected" then
-        local data = self.m_read_fifo
-        self.m_read_fifo = ""
-        return data
+        return self.m_chann:recv()
     end
 end
 
--- event_name always "event_loop", return true to keep event
-function ChannRaw:onLoopEvent(event_name)
+function ChannRaw:onLoopEvent()
     return false
 end
 

@@ -150,16 +150,15 @@ function ChannSSL:handshake()
     return true
 end
 
--- event_name always "event_loop", return true to keep event
-function ChannSSL:onLoopEvent(event_name)
+function ChannSSL:onLoopEvent()
     if not self.m_ssl_connected then
         self.m_ssl_connected = self:handshake()
         if self.m_ssl_connected then
             self.m_callback(self, "event_connected", nil, nil)
-            return false -- remove on loop event
+            return true -- remove on loop event
         end
     end
-    return true -- keep event
+    return false -- keep event
 end
 
 return ChannSSL

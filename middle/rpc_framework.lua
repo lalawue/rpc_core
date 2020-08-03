@@ -179,30 +179,31 @@ function Framework.newRequest(service_info, option_args, path_args, body_args)
     return coroutine.yield() -- yeild recv or disconnect
 end
 
-function Framework.removeLoopCallback(callback_index)
-    if type(callback_index) ~= "number" then
-        return
-    end
-    AllLoopCallbackTable[tonumber(callback_index)] = AllLoopCallbackTable[#AllLoopCallbackTable]
-    AllLoopCallbackTable[#AllLoopCallbackTable] = nil
-end
-
 -- callback function(chann_key, "event_loop")
 -- return index
-function Framework.setupLoopCallback(callback)
-    if not callback then
+function Framework.setLoopEvent(key, check_stop, finalizer)
+    if not check_stop then
         Log:error("invalid loop callback")
     end
-    AllLoopCallbackTable[#AllLoopCallbackTable + 1] = callback
-    return #AllLoopCallbackTable -- callback index
+    AllLoopCallbackTable[key] = {check_stop = check_stop, finalizer = finalizer}
 end
 
 function Framework.pollForever(timeout_second)
     local millisecond = timeout_second and (tonumber(timeout_second) * 1000) or 1000
+    local del_tbl = {}
     while true do
-        for _, callback in ipairs(AllLoopCallbackTable) do
-            callback("event_loop")
+        for key, fn in pairs(AllLoopCallbackTable) do
+            if fn.check_stop() then
+                if fn.finalizer then
+                    fn.finalizer()
+                end
+                del_tbl[#del_tbl + 1] = key
+            end
         end
+        for _, key in ipairs(del_tbl) do
+            AllLoopCallbackTable[key] = nil
+        end
+        del_tbl[1] = nil
         NetCore.poll(millisecond)
     end
 end

@@ -29,8 +29,7 @@ function Browser.newBrowser(options)
         m_options = options, -- options like { inflate = true }
         m_chann = nil, -- one tcp chann
         m_hp = nil, -- hyperparser
-        m_url_info = nil, -- path, host, port
-        m_callback_index = nil -- loop callback index
+        m_url_info = nil -- path, host, port
     }
     setmetatable(brw, Browser)
     if not Browser.m_has_init then
@@ -197,11 +196,12 @@ function Browser:openURL(site_url)
     end
     self.m_chann:setCallback(callback)
     self.m_chann:connectAddr(ipv4, port)
-    self.m_callback_index =
-        RpcFramework.setupLoopCallback(
-        function(event_name)
-            self:onLoopEvent(event_name)
-        end
+    RpcFramework.setLoopEvent(
+        tostring(self),
+        function()
+            return self:onLoopEvent()
+        end,
+        nil
     )
     Log:info("try connect %s:%d", ipv4, port)
     return coroutine.yield()
@@ -222,7 +222,6 @@ function Browser:closeURL()
     Log:info("-- close URL: %s", self.m_url_info and self.m_url_info.host or "empty URL !")
     if self.m_chann then
         self.m_chann:closeChann()
-        RpcFramework.removeLoopCallback(self.m_callback_index)
         self.m_chann = nil
     end
     if self.m_hp then
@@ -232,15 +231,11 @@ function Browser:closeURL()
     self.m_url_info = nil
 end
 
-function Browser:onLoopEvent(event_name)
+function Browser:onLoopEvent()
     if self.m_chann.onLoopEvent then
-        local ret = self.m_chann:onLoopEvent(event_name)
-        if ret then
-            return
-        end
+        return self.m_chann:onLoopEvent()
     end
-    RpcFramework.removeLoopCallback(self.m_callback_index)
-    self.m_callback_index = nil
+    return true
 end
 
 return Browser
