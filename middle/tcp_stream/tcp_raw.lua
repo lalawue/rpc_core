@@ -64,6 +64,8 @@ function ChannRaw:setCallback(callback)
                 self._callback(self, event_name, nil, c_msg)
             elseif event_name == "event_disconnect" then
                 self._callback(self, event_name, nil, c_msg)
+            elseif event_name == "event_timer" then
+                self._callback(self, event_name, nil, c_msg)
             elseif event_name == "event_accept" then
                 local chann_raw = setmetatable({}, ChannRaw)
                 chann_raw._chann = accept_chann
@@ -82,6 +84,12 @@ end
 function ChannRaw:recv()
     if self._chann and self._chann:state() == "state_connected" then
         return self._chann:recv()
+    end
+end
+
+function ChannRaw:setEventTimer(timeout_second)
+    if self._chann then
+        self._chann:activeEvent("event_timer", timeout_second * 1000000)
     end
 end
 

@@ -97,6 +97,8 @@ function ChannSSL:setCallback(callback)
                 self.m_callback(self, event_name, accept_chann, c_msg)
             elseif event_name == "event_disconnect" then
                 self.m_callback(self, event_name, accept_chann, c_msg)
+            elseif event_name == "event_timer" then
+                self.m_callback(self, event_name, accept_chann, c_msg)
             elseif event_name == "event_accept" then
             -- not supported 'server_protocol'
             end
@@ -148,6 +150,12 @@ function ChannSSL:handshake()
         return false
     end
     return true
+end
+
+function ChannSSL:setEventTimer(timeout_second)
+    if self._chann then
+        self._chann:activeEvent("event_timer", timeout_second * 1000000)
+    end
 end
 
 function ChannSSL:onLoopEvent()

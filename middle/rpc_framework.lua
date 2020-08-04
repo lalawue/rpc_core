@@ -174,7 +174,7 @@ function Framework.newRequest(service_info, option_args, path_args, body_args)
         chann:setCallback(callback)
         --Log:debug("try connect %s", option_args.ipv4 or service_info.ipv4)
         chann:connect(option_args.ipv4 or service_info.ipv4, service_info.port)
-        chann:activeEvent("event_timer", tonumber(option_args.timeout or AppEnv.Config.RPC_TIMEOUT) * 1000)
+        chann:activeEvent("event_timer", tonumber(option_args.timeout or AppEnv.Config.RPC_TIMEOUT) * 1000000)
     end
     return coroutine.yield() -- yeild recv or disconnect
 end
