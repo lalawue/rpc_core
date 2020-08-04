@@ -78,8 +78,8 @@ function Test:startBusiness(rpc_framework)
     end
 
     Log:info("open browser with %s", self.m_url)
-    local browser = Browser.newBrowser({timeout = 30, inflate = true})
-    local success, http_header, content = browser:openURL(self.m_url)
+    local browser = Browser.newBrowser()
+    local success, http_header, content = browser:requestURL(self.m_url, {timeout = 30, inflate = true})
     Log:info("reqeust result: %s", success)
     if success then
         -- Log:info("content %s", content)
