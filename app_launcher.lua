@@ -23,7 +23,7 @@ if env_config_path then
     print("APP_ENV_CONFIG: " .. env_config_path)
 else
     env_config_path = "config/app_env.lua"
-    print("APP_ENV_CONFIG: not set, use config/app_env instead")
+    print("APP_ENV_CONFIG: not set, use config/app_env.lua instead")
 end
 
 -- detect app_env_config file exist
