@@ -158,8 +158,8 @@ local Log = require("middle.logger").newLogger("[AgentExample]", "info")
 local AppExample = Class("AgentExample", AppFramework)
 
 function AppExample:initialize(app_name, arg_1)
-   self.m_app_name = app_name
-   self.m_domain = arg_1
+   self._app_name = app_name
+   self._domain = arg_1
    if not arg_1 then
         Log:error("Usage: %s URL", app_name);
         os.exit(0)

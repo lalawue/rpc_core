@@ -15,10 +15,10 @@ local FileManager = require("middle.file_manager")
 local Test = Class("Test", AppFramework)
 
 function Test:initialize(app_name, arg_url, arg_store_file_name)
-    self.m_app_name = app_name
-    self.m_store_file_name = arg_store_file_name
-    self.m_url = arg_url
-    if not self.m_url then
+    self._app_name = app_name
+    self._store_file_name = arg_store_file_name
+    self._url = arg_url
+    if not self._url then
         Log:error("Usage: %s URL [STORE_FILE_NAME]", app_name)
         os.exit(0)
     else
@@ -32,10 +32,10 @@ end
 
 function Test:startBusiness(rpc_framework)
     -- test HTTP_JSON and LUA_SPROTO
-    local url_info = UrlCore.parse(self.m_url)
+    local url_info = UrlCore.parse(self._url)
 
     if not url_info then
-        Log:error("fail to parse url '%s'", self.m_url)
+        Log:error("fail to parse url '%s'", self._url)
         os.exit(0)
     end
 
@@ -44,8 +44,8 @@ function Test:startBusiness(rpc_framework)
         os.exit(0)
     end
 
-    self.m_url_info = url_info
-    Log:info("-- newReqeust Service.DNS_JSON with URL %s", self.m_url)
+    self._url_info = url_info
+    Log:info("-- newReqeust Service.DNS_JSON with URL %s", self._url)
 
     if type(url_info.host) ~= "string" then
         Log:error("invalid host")
@@ -77,16 +77,16 @@ function Test:startBusiness(rpc_framework)
         end
     end
 
-    Log:info("open browser with %s", self.m_url)
+    Log:info("open browser with %s", self._url)
     local browser = Browser.newBrowser()
-    local success, http_header, content = browser:requestURL(self.m_url, {timeout = 30, inflate = true})
+    local success, http_header, content = browser:requestURL(self._url, {timeout = 30, inflate = true})
     Log:info("reqeust result: %s", success)
     if success then
         -- Log:info("content %s", content)
         table.dump(http_header)
         Log:info("content length: %d", content:len())
-        if type(self.m_store_file_name) == "string" and self.m_store_file_name:len() > 0 then
-            FileManager.saveFile(self.m_store_file_name, content)
+        if type(self._store_file_name) == "string" and self._store_file_name:len() > 0 then
+            FileManager.saveFile(self._store_file_name, content)
         end
     else
         Log:info("failed to get result")

@@ -13,7 +13,7 @@ local Log = require("middle.logger").newLogger("[RPC]", "debug")
 
 local RpcParser = {
     -- parse HTTP headers and data
-    m_parser = nil
+    _parser = nil
 }
 RpcParser.__index = RpcParser
 
@@ -28,7 +28,7 @@ function RpcParser.newRequest(rpc_info)
     local parser = _all_parsers[rpc_info.proto]
     if parser then
         local self = setmetatable({}, RpcParser)
-        self.m_parser = parser.newRequest(rpc_info)
+        self._parser = parser.newRequest(rpc_info)
         return self
     else
         Log:error("failed to find parser %s", rpc_info.proto)
@@ -39,7 +39,7 @@ function RpcParser.newResponse(rpc_info)
     local parser = _all_parsers[rpc_info.proto]
     if parser then
         local self = setmetatable({}, RpcParser)
-        self.m_parser = parser.newResponse(rpc_info)
+        self._parser = parser.newResponse(rpc_info)
         return self
     else
         Log:error("failed to find parser %s", rpc_info.proto)
@@ -50,17 +50,17 @@ end
 -- ret_value < 0 means error
 -- proto_info would be something like http_header_table
 function RpcParser:process(data)
-    if not self.m_parser or not data then
+    if not self._parser or not data then
         Log:error("rpc_parser process invalid param")
         return -1
     end
-    return self.m_parser:process(data)
+    return self._parser:process(data)
 end
 
 function RpcParser:destroy()
-    if self.m_parser then
-        self.m_parser:destroy()
-        self.m_parser = nil
+    if self._parser then
+        self._parser:destroy()
+        self._parser = nil
     end
 end
 

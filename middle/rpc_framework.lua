@@ -45,10 +45,7 @@ Framework.__index = Framework
 local AllLoopCallbackTable = {} -- chann index in callback
 
 function Framework.initFramework()
-    if not Framework.m_has_init then
-        Framework.m_has_init = true
-        NetCore.init()
-    end
+    NetCore.init()
 end
 
 local function _closeChannAndParser(service_info, chann, rpc_parser, keep_alive)

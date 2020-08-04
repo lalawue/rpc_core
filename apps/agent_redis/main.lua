@@ -12,7 +12,7 @@ local Log = require("middle.logger").newLogger("[AgentRedis]", "info")
 local App = Class("AgentRedis", AppFramework)
 
 function App:initialize(app_name)
-    self.m_app_name = app_name
+    self._app_name = app_name
     local protocol = AppEnv.Service.LUA_RESP
     Log:info("init %s, try to connect '%s:%d'", app_name, protocol.ipv4, protocol.port)
 end

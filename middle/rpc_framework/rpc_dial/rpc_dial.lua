@@ -18,7 +18,7 @@ local setmetatable = setmetatable
 
 function RpcDial.new()
     local dial = {
-        m_dial = nil
+        _dial = nil
     }
     setmetatable(dial, RpcDial)
     return dial
@@ -39,7 +39,7 @@ function RpcDial:callMethod(rpc_info, rpc_opt, rpc_args, rpc_body)
     end
     local dial = _all_dials[rpc_info.proto]
     if dial then
-        self.m_dial = dial.newRequest(rpc_info, rpc_opt, rpc_args, rpc_body)
+        self._dial = dial.newRequest(rpc_info, rpc_opt, rpc_args, rpc_body)
     else
         Log:error("failed to find dial %s", rpc_info.proto)
     end
@@ -52,18 +52,18 @@ function RpcDial:responseMethod(rpc_info, rpc_opt, rpc_body)
     end
     local dial = _all_dials[rpc_info.proto]
     if dial then
-        self.m_dial = dial.newResponse(rpc_info, rpc_opt, rpc_body)
+        self._dial = dial.newResponse(rpc_info, rpc_opt, rpc_body)
     else
         Log:error("failed to find dial %s", rpc_info.proto)
     end
 end
 
 function RpcDial:makePackage(status_code, err_message)
-    if self.m_dial == nil then
+    if self._dial == nil then
         Log:error("failed to make package for invalid dial object")
         return
     end
-    return self.m_dial:makePackage(status_code, err_message)
+    return self._dial:makePackage(status_code, err_message)
 end
 
 return RpcDial

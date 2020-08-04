@@ -6,8 +6,8 @@
 --
 
 local Logger = {
-   m_name = "[Logger] ",
-   m_level = 1
+   _name = "[Logger] ",
+   _level = 1
 }
 Logger.__index = Logger
 
@@ -26,20 +26,20 @@ end
 -- 'debug', 'info', 'warn', 'error'
 function Logger.newLogger(tag_name, level_name)
    local logger = setmetatable({}, Logger)
-   logger.m_name = tag_name and (tag_name .. " ") or "[Log] "
-   logger.m_level = _level_name_number[level_name] or 1
+   logger._name = tag_name and (tag_name .. " ") or "[Log] "
+   logger._level = _level_name_number[level_name] or 1
    local tbl = {}
    for k, v in pairs(_level_name_number) do
       tbl[tonumber(v)] = k:sub(1,1):upper() .. "." .. tag_name .. " "
    end
-   logger.m_tags = tbl
+   logger._tags = tbl
    return logger
 end
 
 function Logger:log(level_name, fmt, ...)
    local number = _level_name_number[level_name] or 5
-   if number >= self.m_level then
-      tag_printf(self.m_tags[number], fmt, ...)
+   if number >= self._level then
+      tag_printf(self._tags[number], fmt, ...)
    end
 end
 
