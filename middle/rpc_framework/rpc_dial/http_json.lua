@@ -9,26 +9,26 @@ local CJson = require("cjson")
 local UrlCore = require("middle.url")
 
 local Dail = {
-    m_type = nil,
-    m_info = nil, -- server info
-    m_query = nil, -- query string
-    m_method = nil, -- POST or PUT when brings data
-    m_body = nil
+    _type = nil,
+    _info = nil, -- server info
+    _query = nil, -- query string
+    _method = nil, -- POST or PUT when brings data
+    _body = nil
 }
 Dail.__index = Dail
 
 function Dail.newRequest(rpc_info, rpc_opt, rpc_args, rpc_body)
     if rpc_info then
         local self = setmetatable({}, Dail)
-        self.m_type = "REQUEST"
-        self.m_info = rpc_info
+        self._type = "REQUEST"
+        self._info = rpc_info
         if type(rpc_args) == "table" then
-            self.m_query = "?" .. UrlCore.buildQuery(rpc_args)
+            self._query = "?" .. UrlCore.buildQuery(rpc_args)
          else
-            self.m_query = ""
+            self._query = ""
          end
-         self.m_body = rpc_body
-         self.m_method = type(rpc_opt) == "table" and rpc_opt["method"] or nil -- like PUT, UPDATE
+         self._body = rpc_body
+         self._method = type(rpc_opt) == "table" and rpc_opt["method"] or nil -- like PUT, UPDATE
         return self
     end
 end
@@ -36,9 +36,9 @@ end
 function Dail.newResponse(rpc_info, rpc_opt, rpc_body)
     if rpc_info then
         local self = setmetatable({}, Dail)
-        self.m_type = "RESPONSE"
-        self.m_info = rpc_info
-        self.m_body = rpc_body
+        self._type = "RESPONSE"
+        self._info = rpc_info
+        self._body = rpc_body
         return self
     end
 end
@@ -48,20 +48,20 @@ local function _fixedHttpHeaderString()
 end
 
 function Dail:makePackage(status_code, err_message)
-    if self.m_type == nil then
+    if self._type == nil then
         return
     end    
-    local data = self.m_body and CJson.encode( self.m_body ) or ""
-    if self.m_type == "REQUEST" then
+    local data = self._body and CJson.encode( self._body ) or ""
+    if self._type == "REQUEST" then
        local http_method = "GET"
        if data:len() > 2 then
-          if self.m_method then
-             http_method = self.m_method
+          if self._method then
+             http_method = self._method
           else
              http_method = "POST"
           end
        end
-       local path = self.m_info.name .. self.m_query
+       local path = self._info.name .. self._query
        local output = http_method .. " /" .. path .. " HTTP/1.1\n"
           .. _fixedHttpHeaderString()
           .. "Content-Length: " .. data:len() .. "\n\n"

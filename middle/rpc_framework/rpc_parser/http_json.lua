@@ -9,26 +9,26 @@ local CJson = require("cjson")
 local HttpParser = require("middle.ffi_hyperparser")
 
 local Parser = {
-    m_hp = nil, -- hyperparser
+    _hp = nil, -- hyperparser
 }
 Parser.__index = Parser
 
 function Parser.newRequest()
     local parser = setmetatable({}, Parser)
-    parser.m_hp = HttpParser.createParser("REQUEST")
+    parser._hp = HttpParser.createParser("REQUEST")
     return parser
 end
 
 function Parser.newResponse()
     local parser = setmetatable({}, Parser)
-    parser.m_hp = HttpParser.createParser("RESPONSE")
+    parser._hp = HttpParser.createParser("RESPONSE")
     return parser
 end
 
 -- return ret_value, proto_info, data_table
 -- the proto_info would be http_header_table
 function Parser:process(data)
-    local ret_value, state, http_tbl = self.m_hp:process(data)
+    local ret_value, state, http_tbl = self._hp:process(data)
     if ret_value < 0 then
         return ret_value
     end
@@ -48,9 +48,9 @@ function Parser:process(data)
 end
 
 function Parser:destroy()
-    if self.m_hp then
-        self.m_hp:destroy()
-        self.m_hp = nil
+    if self._hp then
+        self._hp:destroy()
+        self._hp = nil
     end
 end
 

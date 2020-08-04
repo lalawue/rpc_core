@@ -14,27 +14,27 @@ local Log = require("middle.logger").newLogger("[RPC]", "trace")
 --
 local RpcResponse = {
     -- build http headers and send
-    m_chann = nil,
-    m_info = nil
+    _chann = nil,
+    _info = nil
 }
 RpcResponse.__index = RpcResponse
 
 function RpcResponse.new(chann, rpc_info)
     local response = setmetatable({}, RpcResponse)
-    response.m_chann = chann
-    response.m_info = rpc_info
+    response._chann = chann
+    response._info = rpc_info
     return response
 end
 
 function RpcResponse:sendResponse(object)
-    if self.m_chann == nil then
+    if self._chann == nil then
         Log:error("rpc_response invalid chann !")
         return
     end
     local dial = RpcDial.new()
-    dial:responseMethod(self.m_info, nil, object)
+    dial:responseMethod(self._info, nil, object)
     local packed = dial:makePackage()
-    self.m_chann:send(packed)
+    self._chann:send(packed)
 end
 
 -- Framework

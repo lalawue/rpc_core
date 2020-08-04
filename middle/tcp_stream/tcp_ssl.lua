@@ -79,7 +79,7 @@ function ChannSSL:setCallback(callback)
         Log:error("invalid callback param")
         return
     end
-    self.m_callback = callback
+    self._callback = callback
     self._chann:setCallback(
         function(chann, event_name, accept_chann, c_msg)
             if event_name == "event_connected" then
@@ -91,14 +91,14 @@ function ChannSSL:setCallback(callback)
                 local data, reason = self._ssl:read()
                 if data then
                     self._rfifo = data
-                    self.m_callback(self, event_name, accept_chann, c_msg)
+                    self._callback(self, event_name, accept_chann, c_msg)
                 end
             elseif event_name == "event_send" then
-                self.m_callback(self, event_name, accept_chann, c_msg)
+                self._callback(self, event_name, accept_chann, c_msg)
             elseif event_name == "event_disconnect" then
-                self.m_callback(self, event_name, accept_chann, c_msg)
+                self._callback(self, event_name, accept_chann, c_msg)
             elseif event_name == "event_timer" then
-                self.m_callback(self, event_name, accept_chann, c_msg)
+                self._callback(self, event_name, accept_chann, c_msg)
             elseif event_name == "event_accept" then
             -- not supported 'server_protocol'
             end
@@ -162,7 +162,7 @@ function ChannSSL:onLoopEvent()
     if not self._ssl_connected then
         self._ssl_connected = self:handshake()
         if self._ssl_connected then
-            self.m_callback(self, "event_connected", nil, nil)
+            self._callback(self, "event_connected", nil, nil)
             return true -- remove on loop event
         end
     end

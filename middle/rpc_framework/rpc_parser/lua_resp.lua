@@ -9,20 +9,20 @@ local Resp = require("resp")
 local Log = require("middle.logger").newLogger("[Redis]", "error")
 
 local Parser = {
-    m_info = nil,
-    m_data = ""
+    _info = nil,
+    _data = ""
 }
 Parser.__index = Parser
 
 function Parser.newRequest(rpc_info)
     local parser = setmetatable({}, Parser)
-    parser.m_info = rpc_info
+    parser._info = rpc_info
     return parser
 end
 
 function Parser.newResponse(rpc_info)
     local parser = setmetatable({}, Parser)
-    parser.m_info = rpc_info
+    parser._info = rpc_info
     return parser
 end
 
@@ -35,14 +35,14 @@ function Parser:process(data)
         Log:error("Invalid process data")
         return -1
     end
-    self.m_data = self.m_data .. data
-    if self.m_data:len() <= 0 then
+    self._data = self._data .. data
+    if self._data:len() <= 0 then
         Log:error("Empty data")
         return 0
     end
-    local consumed, output, typ = Resp.decode(self.m_data)
-    if consumed == self.m_data:len() then
-        self.m_data = ""
+    local consumed, output, typ = Resp.decode(self._data)
+    if consumed == self._data:len() then
+        self._data = ""
         return 1, _proto_info, output
     elseif consumed == Resp.EILSEQ then
         -- Found illegal byte sequence
@@ -55,7 +55,7 @@ function Parser:process(data)
 end
 
 function Parser:destroy()
-    self.m_data = ""
+    self._data = ""
 end
 
 return Parser
