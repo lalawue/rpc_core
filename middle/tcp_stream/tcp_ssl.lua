@@ -21,13 +21,13 @@ else
 end
 
 local ChannSSL = {
-    m_options = nil, -- not use now
-    m_chann = nil, -- mnet chann
-    m_ctx = nil, -- OpenSSL ctx
-    m_ssl = nil, -- OpenSSL SSL handle
-    m_ssl_connected = false, -- SSL connected state
-    m_read_fifo = "",
-    m_write_fifo = ""
+    _options = nil, -- not use now
+    _chann = nil, -- mnet chann
+    _ctx = nil, -- OpenSSL ctx
+    _ssl = nil, -- OpenSSL SSL handle
+    _ssl_connected = false, -- SSL connected state
+    _rfifo = nil, -- read fifo
+    _wfifo = "" -- write fifo
 }
 ChannSSL.__index = ChannSSL
 
@@ -37,38 +37,38 @@ function ChannSSL.openChann(options)
         Log:error("invalid option, not supported now")
     else
         local chann = setmetatable({}, ChannSSL)
-        chann.m_options = options
-        chann.m_ctx = OpenSSL.ctx_new("TLS") -- use ‘TLS’ to negotiate highest available SSL/TLS version
-        chann.m_chann = NetCore.openChann("tcp")
+        chann._options = options
+        chann._ctx = OpenSSL.ctx_new("TLS") -- use ‘TLS’ to negotiate highest available SSL/TLS version
+        chann._chann = NetCore.openChann("tcp")
         return chann
     end
 end
 
 function ChannSSL:closeChann()
-    if self.m_chann then
-        self.m_chann:close()
-        self.m_chann = nil
+    if self._chann then
+        self._chann:close()
+        self._chann = nil
     end
-    if self.m_ssl then
-        self.m_ssl:shutdown()
-        self.m_ssl = nil
+    if self._ssl then
+        self._ssl:shutdown()
+        self._ssl = nil
     end
-    if self.m_ctx then
-        self.m_ctx = nil
+    if self._ctx then
+        self._ctx = nil
     end
-    self.m_options = nil
-    self.m_ssl_connected = false
-    self.m_read_fifo = ""
-    self.m_write_fifo = ""
+    self._options = nil
+    self._ssl_connected = false
+    self._rfifo = nil
+    self._wfifo = ""
 end
 
 -- for client
 function ChannSSL:connectAddr(ipv4, port)
-    if self.m_chann and self.m_chann:state() ~= "state_connected" then
-        self.m_chann:connect(ipv4, port)
+    if self._chann and self._chann:state() ~= "state_connected" then
+        self._chann:connect(ipv4, port)
         return true
     else
-        Log:error("failed to connect '%s:%d', %s", ipv4, port, self.m_chann)
+        Log:error("failed to connect '%s:%d', %s", ipv4, port, self._chann)
         return false
     end
 end
@@ -80,17 +80,17 @@ function ChannSSL:setCallback(callback)
         return
     end
     self.m_callback = callback
-    self.m_chann:setCallback(
+    self._chann:setCallback(
         function(chann, event_name, accept_chann, c_msg)
             if event_name == "event_connected" then
                 -- 'event_connected' callback in self:onLoopEvent()
                 local fd = chann:channFd()
-                self.m_ssl = self.m_ctx:ssl(fd)
-                self.m_ssl:set_connect_state()
+                self._ssl = self._ctx:ssl(fd)
+                self._ssl:set_connect_state()
             elseif event_name == "event_recv" then
-                local data, reason = self.m_ssl:read()
+                local data, reason = self._ssl:read()
                 if data then
-                    self.m_read_fifo = self.m_read_fifo .. data
+                    self._rfifo = data
                     self.m_callback(self, event_name, accept_chann, c_msg)
                 end
             elseif event_name == "event_send" then
@@ -105,45 +105,45 @@ function ChannSSL:setCallback(callback)
 end
 
 function ChannSSL:send(data)
-    if not self.m_ssl_connected then
+    if not self._ssl_connected then
         Log:error("failed to send for ssl not connected")
         return false
     end
-    self.m_write_fifo = self.m_write_fifo .. data
-    local len = self.m_write_fifo:len()
-    local number, reason = self.m_ssl:write(self.m_write_fifo)
+    self._wfifo = self._wfifo .. data
+    local len = self._wfifo:len()
+    local number, reason = self._ssl:write(self._wfifo)
     if number >= len then
-        self.m_write_fifo = ""
+        self._wfifo = ""
     else
-        self.m_write_fifo = self.m_write_fifo:sub(math.min(number, len) + 1)
+        self._wfifo = self._wfifo:sub(math.max(number, 0) + 1)
     end
     return true
 end
 
 function ChannSSL:recv()
-    if not self.m_ssl_connected then
+    if not self._ssl_connected then
         Log:error("failed to recv for ssl not connected")
         return false
     end
-    if self.m_read_fifo:len() > 0 then
-        local data = self.m_read_fifo
-        self.m_read_fifo = ""
+    if self._rfifo then
+        local data = self._rfifo
+        self._rfifo = nil
         return data
     end
 end
 
 -- SSL handshake
 function ChannSSL:handshake()
-    if not self.m_ssl then
+    if not self._ssl then
         return false
     end
-    local ret, reason = self.m_ssl:handshake()
+    local ret, reason = self._ssl:handshake()
     if not ret then
         if reason == "want_read" then
             -- disable send buffer empty event was enough
-            self.m_chann:activeEvent("event_send", false)
+            self._chann:activeEvent("event_send", false)
         elseif reason == "want_write" then
-            self.m_chann:activeEvent("event_send", true)
+            self._chann:activeEvent("event_send", true)
         end
         return false
     end
@@ -151,9 +151,9 @@ function ChannSSL:handshake()
 end
 
 function ChannSSL:onLoopEvent()
-    if not self.m_ssl_connected then
-        self.m_ssl_connected = self:handshake()
-        if self.m_ssl_connected then
+    if not self._ssl_connected then
+        self._ssl_connected = self:handshake()
+        if self._ssl_connected then
             self.m_callback(self, "event_connected", nil, nil)
             return true -- remove on loop event
         end
