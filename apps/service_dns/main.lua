@@ -114,7 +114,7 @@ function App:initUdpQueryChanns()
             end
         )
         udp_chann:connect(dns_ipv4[i], 53)
-        c_udp_channs[i - 1] = udp_chann.m_chann
+        c_udp_channs[i - 1] = udp_chann._chann -- internal ctype
     end
     -- set C UDP chann to DnsCore
     DnsCore.mdns_init(c_udp_channs, #dns_ipv4)

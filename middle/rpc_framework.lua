@@ -135,7 +135,7 @@ function Framework.newRequest(service_info, option_args, path_args, body_args)
     end
 
     -- reuse chann or create new one, assume service_info are the same
-    local chann = option_args.reuse_info or NetCore.openChann("tcp")
+    local chann = option_args and option_args.reuse_info or NetCore.openChann("tcp")
 
     if chann:state() == "state_connected" then
         Log:trace("'%s' reuseinfo: %s", service_info.name, chann)
