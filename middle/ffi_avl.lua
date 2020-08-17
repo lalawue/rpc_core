@@ -43,6 +43,9 @@ local function _calloc(str)
     return ffi.cast(str .. "*", C.calloc(1, ffi.sizeof(str)))
 end
 
+-- node manipulation
+--
+
 local function _leftHeight(node)
     return (node.left ~= nil) and node.left.height or 0
 end
@@ -97,7 +100,7 @@ local function _updateHeight(node)
     node.height = math.max(h0, h1) + 1
 end
 
-local function _nodeFixLeft(node, root)
+local function _fixLeft(node, root)
     local right = node.right
     local rh0 = _leftHeight(right)
     local rh1 = _rightHeight(right)
@@ -109,9 +112,10 @@ local function _nodeFixLeft(node, root)
     node = _rotateLeft(node, root)
     _updateHeight(node.left)
     _updateHeight(node)
+    return node
 end
 
-local function _nodeFixRight(node, root)
+local function _fixRight(node, root)
     local left = node.left
     local rh0 = _leftHeight(left)
     local rh1 = _rightHeight(left)
@@ -123,9 +127,10 @@ local function _nodeFixRight(node, root)
     node = _rotateRight(node, root)
     _updateHeight(node.right)
     _updateHeight(node)
+    return node
 end
 
-local function _nodeRebalance(node, root)
+local function _rebalance(node, root)
     while node ~= nil do
         local h0 = _leftHeight(node)
         local h1 = _rightHeight(node)
@@ -137,9 +142,9 @@ local function _nodeRebalance(node, root)
             break
         end
         if diff <= -2 then
-            node = _nodeFixLeft(node, root)
+            node = _fixLeft(node, root)
         elseif diff >= 2 then
-            node = _nodeFixRight(node, root)
+            node = _fixRight(node, root)
         end
         if node ~= nil then
             node = node.parent
@@ -147,7 +152,7 @@ local function _nodeRebalance(node, root)
     end
 end
 
-local function _nodeRemove(node, root)
+local function _remove(node, root)
     local child = nil
     local parent = nil
     if node.left ~= nil and node.right ~= nil then
@@ -156,11 +161,10 @@ local function _nodeRemove(node, root)
         node = node.right
         while true do
             left = node.left
-            if left ~= nil then
-                node = left
-            else
+            if left == nil then
                 break
             end
+            node = left
         end
         child = node.right
         parent = node.parent
@@ -189,8 +193,11 @@ local function _nodeRemove(node, root)
         parent = node.parent
         _childReplace(node, child, parent, root)
         if child ~= nil then
-            _nodeRebalance(parent, root)
+            child.parent = parent
         end
+    end
+    if parent ~= nil then
+        _rebalance(parent, root)
     end
 end
 
@@ -229,7 +236,7 @@ local function _linkChild(self, sw, node)
 end
 
 -- update parent node
-local function _linkUpdateParent(parent)
+local function _linkUpdate(parent)
     _parent = parent
 end
 
@@ -372,16 +379,13 @@ function _M:insert(value)
         if parent == nil then
             break
         end
-        _linkUpdateParent(parent)
+        _linkUpdate(parent)
         local parent_value = self._nvmap[parent.key]
         local hr = compare(value, parent_value)
         if hr == 0 then
             return parent_value
-        else
-            -- check next parent
-            if _linkChild(self, hr, nil) == nil then
-                break
-            end
+        elseif _linkChild(self, hr, nil) == nil then
+            break -- check next parent
         end
     end
     -- create node
@@ -396,7 +400,7 @@ function _M:insert(value)
     node.right = nil
     -- link node
     _linkChild(self, _sw, node)
-    _nodeRebalance(parent, self._root)
+    _rebalance(parent, self._root)
     self._count = self._count + 1
 end
 
@@ -408,7 +412,7 @@ function _M:remove(value)
     if node == nil or node.parent == node then
         return nil
     end
-    _nodeRemove(node, self._root)
+    _remove(node, self._root)
     node.parent = node
     self._nvmap[node.key] = nil
     self._vnmap[value] = nil
