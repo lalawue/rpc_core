@@ -161,19 +161,6 @@ local Build = {
         self:runCmd(copy_binary)
         print("-- end -- \n")
     end,
-    prepareLuaRBTreeLibrary = function(self, dir_name, name)
-        print("-- begin build lrbtree -- ")
-        local inc_dir = "-I" .. self.INCPTH
-        local c_sources = "lrbtree.c rbtree.c"
-        local c_compile = fmt("%s %s %s -l%s %s", self.CC, self.CFLAGS, inc_dir, self.LIBNAME, c_sources)
-        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lrbtree.git --depth 1; fi;", dir_name)
-        local make_cmd = fmt("cd %s; if [ ! -f '%s.so' ]; then %s -o %s.so ; fi; ", dir_name, name, c_compile, name)
-        local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name, true))
-        self:runCmd(clone_cmd)
-        self:runCmd(make_cmd)
-        self:runCmd(copy_binary)
-        print("-- end -- \n")
-    end,
     prepareLuaRedisClientLibrary = function(self, dir_name, name)
         print("-- begin build lua-resp -- ")
         local inc_dir = "-Isrc -I" .. self.INCPTH
@@ -225,6 +212,5 @@ Build:prepareHyperparserLibrary("hyperparser", "hyperparser")
 Build:prepareDnsLibrary("m_dnscnt", "mdns")
 Build:prepareSprotoLibrary("sproto", "sproto")
 Build:prepareLpegLibrary("lpeg", "lpeg")
-Build:prepareLuaRBTreeLibrary("lrbtree", "lrbtree")
 Build:prepareLuaRedisClientLibrary("lua-resp", "resp")
 Build:prepareLuaOpenSSLLibrary("lua-openssl", "openssl")
