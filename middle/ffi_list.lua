@@ -205,11 +205,11 @@ local function _new()
    ins._vnmap = {}              -- value to node
    ins._nvmap = {}              -- node to value
    ins._bkey = 0            -- for key generation
-   ffi.gc(ins._root, function(ins)
+   ffi.gc(ins._root, function(root)
              for _, n in pairs(ins._vnmap) do
                 C.free(n)
              end
-             C.free(ins)
+             C.free(root)
    end)
    return ins
 end
