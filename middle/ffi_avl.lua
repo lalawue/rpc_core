@@ -32,10 +32,11 @@ _M.__index = _M
 
 -- key for node <-> value mapping
 local function _nextKey(self)
-    local bkey = math.random()
+    local bkey = self._bkey + 1e-35
     while self._nvmap[bkey] do
-        bkey = math.random()
+        bkey = bkey - math.random()
     end
+    self._bkey = bkey
     return bkey
 end
 
@@ -434,6 +435,7 @@ local function _new(compare_func)
     ins._nvmap = {} -- node to value
     ins._count = 0 -- total count
     ins._compare = compare_func -- compare function
+    ins._bkey = 0
     ffi.gc(
         ins._root,
         function(root)
