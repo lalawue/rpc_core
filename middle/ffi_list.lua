@@ -16,7 +16,7 @@ ffi.cdef [[
 struct _cnode {
     struct _cnode *prev;
     struct _cnode *next;
-    float key;
+    double key;
 };
 struct _chead {
     struct _cnode *head;
@@ -32,12 +32,12 @@ local _M = {}
 _M.__index = _M
 
 local function _nextKey(self)
-    local bkey = self._bkey + 1e-35
-    while self._nvmap[self._bkey] do
-        bkey = bkey - math.random()
+    local key = self._key + 1e-32 -- ignore significant digit
+    while self._nvmap[key] do
+        key = key + math.random()
     end
-    self._bkey = bkey
-    return bkey
+    self._key = key
+    return key
 end
 
 local function _calloc(str)
@@ -147,6 +147,28 @@ function _M:remove(value)
     return _remove_node(self, self._vnmap[value])
 end
 
+function _M:next(value)
+    if value == nil then
+        return nil
+    end
+    local node = self._vnmap[value]
+    if node == nil or node.next == nil then
+        return nil
+    end
+    return self._nvmap[node.next.key]
+end
+
+function _M:prev(value)
+    if value == nil then
+        return nil
+    end
+    local node = self._vnmap[value]
+    if node == nil or node.prev == nil then
+        return nil
+    end
+    return self._nvmap[node.prev.key]
+end
+
 function _M:range(from, to)
     from = from or 1
     to = to or self._count
@@ -189,6 +211,21 @@ function _M:walk()
     end
 end
 
+function _M:clear()
+    if self._count <= 0 then
+        return
+    end
+    for _, n in pairs(self._vnmap) do
+        C.free(n)
+    end
+    self._root.head = nil
+    self._root.tail = nil
+    self._vnmap = {} -- value to node
+    self._nvmap = {} -- node to value
+    self._count = 0
+    self._key = 0 -- for key generation
+end
+
 function _M:count()
     return self._count
 end
@@ -197,10 +234,12 @@ end
 local function _new()
     local ins = setmetatable({}, _M)
     ins._root = _calloc("struct _chead")
-    ins._count = 0
+    ins._root.head = nil
+    ins._root.tail = nil
     ins._vnmap = {} -- value to node
     ins._nvmap = {} -- node to value
-    ins._bkey = 0 -- for key generation
+    ins._count = 0
+    ins._key = 0 -- for key generation
     ffi.gc(
         ins._root,
         function(root)

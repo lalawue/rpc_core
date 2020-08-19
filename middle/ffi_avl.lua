@@ -16,7 +16,7 @@ struct _avl_node {
     struct _avl_node *right;
     struct _avl_node *parent;
     int height;
-    float key;
+    double key;
 };
 struct _avl_root {
     struct _avl_node *node;
@@ -32,12 +32,12 @@ _M.__index = _M
 
 -- key for node <-> value mapping
 local function _nextKey(self)
-    local bkey = self._bkey + 1e-35
-    while self._nvmap[bkey] do
-        bkey = bkey - math.random()
+    local key = self._key + 1e-32 -- ignore significant digit
+    while self._nvmap[key] do
+        key = key + math.random()
     end
-    self._bkey = bkey
-    return bkey
+    self._key = key
+    return key
 end
 
 local function _calloc(str)
@@ -422,6 +422,20 @@ function _M:remove(value)
     return value
 end
 
+function _M:clear()
+    if self._count <= 0 then
+        return
+    end
+    for _, n in pairs(self._vnmap) do
+        C.free(n)
+    end
+    self._root.node = nil
+    self._vnmap = {} -- value to node
+    self._nvmap = {} -- node to value
+    self._count = 0 -- total count
+    self._key = 0
+end
+
 function _M:count()
     return self._count
 end
@@ -434,8 +448,8 @@ local function _new(compare_func)
     ins._vnmap = {} -- value to node
     ins._nvmap = {} -- node to value
     ins._count = 0 -- total count
-    ins._compare = compare_func -- compare function
-    ins._bkey = 0
+    ins._key = 0
+    ins._compare = compare_func -- compare function     
     ffi.gc(
         ins._root,
         function(root)
