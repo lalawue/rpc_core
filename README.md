@@ -1,7 +1,7 @@
 
 # About
 
-m_rpc_framework was a LuaJIT base network bundle aim to easily build simple network apps. Like local DNS service provide RESTful JSON API, or a crawler rise requests to fetch gziped HTML pages.
+rpc_framework was a LuaJIT base network bundle aim to easily build simple network apps. Like local DNS service provide RESTful JSON API, or a crawler rise requests to fetch gziped HTML pages.
 
 Support MacOS/Linux/FreeBSD/Windows.
 
@@ -15,7 +15,7 @@ $ export LUA_JIT_INCLUDE_PATH=/usr/local/include/luajit-2.1
 $ cd build
 $ sh proj_build.sh
 ```
-waits clone, build, then copy binaries finish, or you can download pre-compiled binaries in [release](https://github.com/lalawue/m_rpc_framework/releases).
+waits clone, build, then copy binaries finish, or you can download pre-compiled binaries in [release](https://github.com/lalawue/rpc_framework/releases).
 
 by the way, you can use your own build script as proj_build.lua, run as
 
@@ -94,7 +94,7 @@ services name, ip, port, protocol, including extra APP_DIR, TMP_DIR, DATA_DIR ar
 
 you can use difference app_env.lua for difference app instance, just export APP_ENV_CONFIG=/PATH/To/YOUR/app_env.lua before run_app.sh.
 
-you can use another apps dir in AppEnv.Config.APP_DIR, outside m_rpc_framework/apps/.
+you can use another apps dir in AppEnv.Config.APP_DIR, outside rpc_framework/apps/.
 
 
 # Setup a RESTful JSON API
