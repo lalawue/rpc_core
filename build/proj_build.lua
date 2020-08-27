@@ -22,9 +22,9 @@ local Build = {
     CC = os.getenv("CC"),
     CFLAGS = os.getenv("CFLAGS"),
     MAKE = os.getenv("MAKE"),
-    INCPTH = os.getenv("LUA_JIT_INCLUDE_PATH") or "/usr/local/include/luajit-2.0/",
-    LIBPATH = os.getenv("LD_LIBRARY_PATH") or os.getenv("DYLD_LIBRARY_PATH") or "/usr/local/lib",
-    LIBNAME = os.getenv("LUA_JIT_LIBRARY_NAME") or "luajit-5.1",
+    INCPTH = os.getenv("LUAJIT_INC_DIR") or "/usr/local/include/luajit-2.0/",
+    LIBPATH = os.getenv("LUAJIT_LIB_DIR")  or "/usr/local/lib",
+    LIBNAME = os.getenv("LUAJIT_LIB_NAME") or "luajit-5.1",
     PKGPATH = os.getenv("PKG_CONFIG_PATH"),
     --
     --
@@ -129,10 +129,11 @@ local Build = {
     end,
     prepareSprotoLibrary = function(self, dir_name, name)
         print("-- begin build sproto -- ")
-        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/sproto.git --depth 1; fi;", dir_name)
+        local clone_cmd =
+            fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/sproto.git --depth 1; fi;", dir_name)
         local make_cmd =
             fmt(
-            "cd %s; if [ ! -f '%s' ]; then %s LUA_JIT_INCLUDE_PATH=%s; fi; ",
+            "cd %s; if [ ! -f '%s' ]; then %s LUAJIT_INC_DIR=%s; fi; ",
             dir_name,
             self:binaryName(name),
             self.MAKE,
@@ -146,10 +147,11 @@ local Build = {
     end,
     prepareLpegLibrary = function(self, dir_name, name)
         print("-- begin build lpeg -- ")
-        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lpeg.git --depth 1; fi;", dir_name)
+        local clone_cmd =
+            fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lpeg.git --depth 1; fi;", dir_name)
         local make_cmd =
             fmt(
-            "cd %s; if [ ! -f '%s' ]; then %s LUA_JIT_INCLUDE_PATH=%s; fi; ",
+            "cd %s; if [ ! -f '%s' ]; then %s LUAJIT_INC_DIR=%s; fi; ",
             dir_name,
             self:binaryName(name),
             self.MAKE,
@@ -161,12 +163,42 @@ local Build = {
         self:runCmd(copy_binary)
         print("-- end -- \n")
     end,
+    prepareTokyoCabinetLibrary = function(self, dir_name, name)
+        print("-- begin build tokyocabinet -- ")
+        local clone_cmd =
+            fmt(
+            "if [ ! -d '%s' ]; then git clone --depth 1 https://github.com/lalawue/lua-tokyocabinet.git; fi;",
+            dir_name
+        )
+        local make_cmd =
+            fmt(
+            "cd %s; if [ ! -f 'cabinet.so' ]; then ./build.sh tokyocabinet; ./build.sh lua -I%s -L%s -l%s; fi;",
+            dir_name,
+            self.INCPTH,
+            self.LIBPATH,
+            self.LIBNAME
+        )
+        local copy_binary =
+            fmt(
+            "cd %s; cp tokyocabinet-1.4.48/libtokyocabinet.9.11.0.* %s/%s; cp cabinet.so %s/%s",
+            dir_name,
+            binary_dir,
+            self:binaryName("tokyocabinet"),
+            binary_dir,
+            self:binaryName(name)
+        )
+        self:runCmd(clone_cmd)
+        self:runCmd(make_cmd)
+        self:runCmd(copy_binary)
+        print("-- end -- \n")
+    end,
     prepareLuaRedisClientLibrary = function(self, dir_name, name)
         print("-- begin build lua-resp -- ")
         local inc_dir = "-Isrc -I" .. self.INCPTH
         local c_sources = "src/lauxhlib.c src/resp.c "
         local c_compile = fmt("%s %s %s -l%s %s", self.CC, self.CFLAGS, inc_dir, self.LIBNAME, c_sources)
-        local clone_cmd = fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lua-resp.git --depth 1; fi;", dir_name)
+        local clone_cmd =
+            fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lua-resp.git --depth 1; fi;", dir_name)
         local make_cmd = fmt("cd %s; if [ ! -f '%s.so' ]; then %s -o %s.so ; fi; ", dir_name, name, c_compile, name)
         local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name, true))
         self:runCmd(clone_cmd)
@@ -177,14 +209,12 @@ local Build = {
     prepareLuaOpenSSLLibrary = function(self, dir_name, name)
         print("-- begin build lua-openssl -- ")
         local clone_cmd =
-            fmt("if [ ! -d '%s' ]; then git clone --recurse https://github.com/zhaozg/lua-openssl.git --depth 1; fi;", dir_name)
-        local make_cmd =
             fmt(
-            "cd %s; if [ ! -f '%s.so' ]; then export PKG_CONFIG_PATH=%s; make; fi; ",
-            dir_name,
-            name,
-            self.PKGPATH
+            "if [ ! -d '%s' ]; then git clone --recurse https://github.com/zhaozg/lua-openssl.git --depth 1; fi;",
+            dir_name
         )
+        local make_cmd =
+            fmt("cd %s; if [ ! -f '%s.so' ]; then export PKG_CONFIG_PATH=%s; make; fi; ", dir_name, name, self.PKGPATH)
         local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
         self:runCmd(clone_cmd)
         self:runCmd(make_cmd)
@@ -200,9 +230,9 @@ print("Build with ENV (or you can export):")
 print("MAKE: \t\t", Build.MAKE)
 print("CC: \t\t", Build.CC)
 print("CFLAGS: \t", Build.CFLAGS)
-print("LUA_JIT_INCLUDE_PATH: ", Build.INCPTH)
-print("LD_LIBRARY_PATH: ", Build.LIBPATH)
-print("LUA_JIT_LIBRARY_NAME: ", Build.LIBNAME)
+print("LUAJIT_INC_DIR: ", Build.INCPTH)
+print("LUAJIT_LIB_DIR: ", Build.LIBPATH)
+print("LUAJIT_LIB_NAME: ", Build.LIBNAME)
 print("PKG_CONFIG_PATH: ", Build.PKGPATH)
 print("\n--- prepare to build\n")
 os.execute("sleep 3")
@@ -212,5 +242,6 @@ Build:prepareHyperparserLibrary("hyperparser", "hyperparser")
 Build:prepareDnsLibrary("m_dnscnt", "mdns")
 Build:prepareSprotoLibrary("sproto", "sproto")
 Build:prepareLpegLibrary("lpeg", "lpeg")
+Build:prepareTokyoCabinetLibrary("lua-tokyocabinet", "cabinet")
 Build:prepareLuaRedisClientLibrary("lua-resp", "resp")
 Build:prepareLuaOpenSSLLibrary("lua-openssl", "openssl")
