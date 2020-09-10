@@ -12,6 +12,10 @@ first build dependent libraries, under MacOS/Linux/FreeBSD, just
 
 ```js
 $ cd build
+$ export LUAJIT_INC_DIR=/usr/local/include
+$ export LUAJIT_LIB_DIR=/usr/local/lib
+$ export LUAJIT_LIB_NAME=luajit
+$ export PKG_CONFIG_PATH=/usr/local/Cellar/openssl@1.1/1.1.1g/lib/pkgconfig
 $ sh proj_build.sh
 ```
 waits clone, build, then copy binaries finish, or you can download pre-compiled binaries in [release](https://github.com/lalawue/rpc_framework/releases).
