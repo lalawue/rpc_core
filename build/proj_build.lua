@@ -185,7 +185,7 @@ local Build = {
             binary_dir,
             self:binaryName("tokyocabinet"),
             binary_dir,
-            self:binaryName(name)
+            self:binaryName(name .. ".9")
         )
         self:runCmd(clone_cmd)
         self:runCmd(make_cmd)
