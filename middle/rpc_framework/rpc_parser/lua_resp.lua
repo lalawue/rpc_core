@@ -50,7 +50,7 @@ function Parser:process(data)
         return -1
     end
     -- Not enough data available.
-    Log:error("Not enough data")
+    --Log:error("Not enough data")
     return 0
 end
 
