@@ -43,7 +43,7 @@ AppEnv.Config = {
     DATA_DIR = _tmpDir() .. "/rpc_apps",
     LOOP_IPV4 = "127.0.0.1", -- loop ip
     HOST_IPV4 = "0.0.0.0", -- host ip
-    RPC_TIMEOUT = 8, -- 8 second
+    RPC_TIMEOUT = 8 -- 8 second
 }
 
 AppEnv.Prototols = {
@@ -78,6 +78,12 @@ AppEnv.Service = {
         proto = AppEnv.Prototols.LUA_RESP,
         ipv4 = AppEnv.Config.LOOP_IPV4,
         port = 6379
+    },
+    OBJDB_RESP = {
+        name = "objdb",
+        proto = AppEnv.Prototols.LUA_RESP,
+        ipv4 = AppEnv.Config.HOST_IPV4,
+        port = 10060
     }
 }
 
