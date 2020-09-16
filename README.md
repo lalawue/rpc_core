@@ -38,6 +38,7 @@ APP_ENV_CONFIG: not set, use config.app_env instead
 I.[AppEnv] parse sproto spec config/app_rpc_spec.sproto
 supported apps:
         service_dns
+        service_objdb
         agent_redis
         agent_test
 ```
@@ -193,6 +194,8 @@ return AppExample
 
 you can define your own message serialization format, like apps/service_dns provide JSON and [Sproto](https://github.com/cloudwu/sproto) protocol service ports, defined in config/app_env.lua.
 
+or apps/service_objdb using RESP (Redis Protocol specification 2) for object storage with Tokyo Cabinet as its backend.
+
 
 # Thanks
 
@@ -213,8 +216,7 @@ Thanks people provide libraries below:
 - [mah0x211/lua-resp](https://github.com/mah0x211/lua-resp), RESP (REdis Serialization Protocol) parser for Lua
 - [slembcke/debugger.lua](https://github.com/slembcke/debugger.lua), A simple, embedabble CLI debugger for Lua
 - [ColonelThirtyTwo/lsqlite3-ffi](https://github.com/ColonelThirtyTwo/lsqlite3-ffi), Lua SQLite using LuaJIT's FFI library
-- [daurnimator/fifo.lua](https://github.com/daurnimator/fifo.lua), Fifo library for Lua
-- [Tieske/binaryheap.lua](https://github.com/Tieske/binaryheap.lua), Binary heap implementation in Lua
+- [Tokyo Cabinet](https://dbmx.net/tokyocabinet/), key/value database from FAL Labs
 - [m_net](https://github.com/lalawue/m_net)
 - [m_foundation](https://github.com/lalawue/m_foundation)
 - [m_dnscnt](https://github.com/lalawue/m_dnscnt)
