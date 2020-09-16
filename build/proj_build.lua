@@ -183,9 +183,9 @@ local Build = {
             "cd %s; cp tokyocabinet-1.4.48/libtokyocabinet.9.11.0.* %s/%s; cp cabinet.so %s/%s",
             dir_name,
             binary_dir,
-            self:binaryName("tokyocabinet"),
+            self:binaryName("tokyocabinet.9"),
             binary_dir,
-            self:binaryName(name .. ".9")
+            self:binaryName(name)
         )
         self:runCmd(clone_cmd)
         self:runCmd(make_cmd)
