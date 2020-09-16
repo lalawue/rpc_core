@@ -36,11 +36,11 @@ function Dial.newResponse(rpc_info, rpc_opt, rpc_body)
 end
 
 function Dial:makePackage()
-    if not self._data or #self._data <= 0 then
+    if type(self._data) ~= "table" then
         Log:error("Invalid data")
         return
     end
-    local msg = Resp.encode(unpack(self._data))
+    local msg = Resp.encode((#self._data > 0) and unpack(self._data) or nil)
     self._data = nil
     return msg
 end
