@@ -9,3 +9,4 @@ build script require 'git', 'luajit', 'gcc/cc', 'make/gmake', only support MacOS
 
 - libsqlite3: manually install with root privilege
 - libiconv: manually install with root privilege
+- libbz2: manually install with root privilege, apt-get install libbz2-1.0 libbz2-dev

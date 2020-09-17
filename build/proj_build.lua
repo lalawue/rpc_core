@@ -43,11 +43,12 @@ local Build = {
         print("cmd: ", cmd)
         os.execute(cmd)
     end,
-    binaryName = function(_, name)
+    binaryName = function(_, name, extra)
+        extra = extra or ""
         if jit.os == "OSX" then
-            return "lib" .. name .. ".dylib"
+            return "lib" .. name .. extra .. ".dylib"
         else
-            return "lib" .. name .. ".so"
+            return "lib" .. name .. ".so" .. extra
         end
     end,
     --
@@ -91,7 +92,7 @@ local Build = {
             c_sources,
             name
         )
-        local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name, true))
+        local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
         self:runCmd(clone_cmd)
         self:runCmd(make_cmd)
         self:runCmd(copy_binary)
@@ -180,10 +181,10 @@ local Build = {
         )
         local copy_binary =
             fmt(
-            "cd %s; cp tokyocabinet-1.4.48/libtokyocabinet.9.11.0.* %s/%s; cp cabinet.so %s/%s",
+            "cd %s; cp tokyocabinet-1.4.48/libtokyocabinet*.9.11.0* %s/%s; cp cabinet.so %s/%s",
             dir_name,
             binary_dir,
-            self:binaryName("tokyocabinet.9"),
+            self:binaryName("tokyocabinet", ".9"),
             binary_dir,
             self:binaryName(name)
         )
@@ -200,7 +201,7 @@ local Build = {
         local clone_cmd =
             fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lua-resp.git --depth 1; fi;", dir_name)
         local make_cmd = fmt("cd %s; if [ ! -f '%s.so' ]; then %s -o %s.so ; fi; ", dir_name, name, c_compile, name)
-        local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name, true))
+        local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
         self:runCmd(clone_cmd)
         self:runCmd(make_cmd)
         self:runCmd(copy_binary)
