@@ -40,7 +40,12 @@ function Dial:makePackage()
         Log:error("Invalid data")
         return
     end
-    local msg = Resp.encode((#self._data > 0) and unpack(self._data) or nil)
+    local msg = ""
+    if #self._data > 0 then
+        msg = Resp.encode(unpack(self._data))
+    else
+        msg = Resp.encode(nil)
+    end
     self._data = nil
     return msg
 end
