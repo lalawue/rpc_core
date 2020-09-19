@@ -26,6 +26,7 @@ function RpcResponse.new(chann, rpc_info)
     return response
 end
 
+-- can send multiple times
 function RpcResponse:sendResponse(object)
     if self._chann == nil then
         Log:error("rpc_response invalid chann !")
@@ -35,6 +36,15 @@ function RpcResponse:sendResponse(object)
     dial:responseMethod(self._info, nil, object)
     local packed = dial:makePackage()
     self._chann:send(packed)
+end
+
+-- peer's ip:port as signature
+function RpcResponse:peerSignature()
+    if not self._signature then
+        local addr = self._chann:addr()
+        self._signature = addr.ip .. ":" .. tostring(addr.port)
+    end
+    return self._signature
 end
 
 -- Framework
