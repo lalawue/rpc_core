@@ -164,35 +164,6 @@ local Build = {
         self:runCmd(copy_binary)
         print("-- end -- \n")
     end,
-    prepareTokyoCabinetLibrary = function(self, dir_name, name)
-        print("-- begin build tokyocabinet -- ")
-        local clone_cmd =
-            fmt(
-            "if [ ! -d '%s' ]; then git clone --depth 1 https://github.com/lalawue/lua-tokyocabinet.git; fi;",
-            dir_name
-        )
-        local make_cmd =
-            fmt(
-            "cd %s; if [ ! -f 'cabinet.so' ]; then ./build.sh tokyocabinet; ./build.sh lua -I%s -L%s -l%s; fi;",
-            dir_name,
-            self.INCPTH,
-            self.LIBPATH,
-            self.LIBNAME
-        )
-        local copy_binary =
-            fmt(
-            "cd %s; cp tokyocabinet-1.4.48/libtokyocabinet*.9.11.0* %s/%s; cp cabinet.so %s/%s",
-            dir_name,
-            binary_dir,
-            self:binaryName("tokyocabinet", ".9"),
-            binary_dir,
-            self:binaryName(name)
-        )
-        self:runCmd(clone_cmd)
-        self:runCmd(make_cmd)
-        self:runCmd(copy_binary)
-        print("-- end -- \n")
-    end,
     prepareLuaRedisClientLibrary = function(self, dir_name, name)
         print("-- begin build lua-resp -- ")
         local inc_dir = "-Isrc -I" .. self.INCPTH
@@ -243,6 +214,5 @@ Build:prepareHyperparserLibrary("hyperparser", "hyperparser")
 Build:prepareDnsLibrary("m_dnscnt", "mdns")
 Build:prepareSprotoLibrary("sproto", "sproto")
 Build:prepareLpegLibrary("lpeg", "lpeg")
-Build:prepareTokyoCabinetLibrary("lua-tokyocabinet", "cabinet")
 Build:prepareLuaRedisClientLibrary("lua-resp", "resp")
 Build:prepareLuaOpenSSLLibrary("lua-openssl", "openssl")
