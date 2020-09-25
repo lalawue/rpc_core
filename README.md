@@ -216,6 +216,7 @@ Thanks people provide libraries below:
 - [mah0x211/lua-resp](https://github.com/mah0x211/lua-resp), RESP (REdis Serialization Protocol) parser for Lua
 - [slembcke/debugger.lua](https://github.com/slembcke/debugger.lua), A simple, embedabble CLI debugger for Lua
 - [ColonelThirtyTwo/lsqlite3-ffi](https://github.com/ColonelThirtyTwo/lsqlite3-ffi), Lua SQLite using LuaJIT's FFI library
+- [cloudwu/lua-serialize](https://github.com/cloudwu/lua-serialize), Serialize lua objects into a binary block
 - [m_net](https://github.com/lalawue/m_net)
 - [m_foundation](https://github.com/lalawue/m_foundation)
 - [m_dnscnt](https://github.com/lalawue/m_dnscnt)
