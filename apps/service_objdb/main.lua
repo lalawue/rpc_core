@@ -8,7 +8,7 @@
 local ffi = require("ffi")
 local AppFramework = require("middle.app_framework")
 local FileManager = require("middle.file_manager")
-local BitCast = require("middle.ffi_bitcask")
+local Bitcask = require("middle.ffi_bitcask")
 local Log = require("middle.logger").newLogger("[ObjDB]", "info")
 
 -- object storage using redis resp_v2's 'SET/GET/DEL/KEYS', and 'SYNC' for sync linked objdb
@@ -46,7 +46,7 @@ function App:loadObjDB()
         dir = self._dir,
         file_size = 128 * 1024 * 1024 -- 128MB
     }
-    local db = BitCast.opendb(config)
+    local db = Bitcask.opendb(config)
     if db then
         self._db = db
     else
