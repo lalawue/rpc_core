@@ -23,7 +23,7 @@ local Build = {
     CFLAGS = os.getenv("CFLAGS"),
     MAKE = os.getenv("MAKE"),
     INCPTH = os.getenv("LUAJIT_INC_DIR") or "/usr/local/include/luajit-2.0/",
-    LIBPATH = os.getenv("LUAJIT_LIB_DIR")  or "/usr/local/lib",
+    LIBPATH = os.getenv("LUAJIT_LIB_DIR") or "/usr/local/lib",
     LIBNAME = os.getenv("LUAJIT_LIB_NAME") or "luajit-5.1",
     PKGPATH = os.getenv("PKG_CONFIG_PATH"),
     --
@@ -178,6 +178,23 @@ local Build = {
         self:runCmd(copy_binary)
         print("-- end -- \n")
     end,
+    prepareSerializeLibrary = function(self, dir_name, name)
+        print("-- begin build lua-serialize -- ")
+        local inc_dir = "-I" .. self.INCPTH
+        local c_sources = "lpacker.c"
+        local c_compile = fmt("%s %s %s -l%s %s", self.CC, self.CFLAGS, inc_dir, self.LIBNAME, c_sources)
+        local clone_cmd =
+            fmt(
+            "if [ ! -d '%s' ]; then git clone https://github.com/lalawue/lua-serialize.git --depth 1; fi;",
+            dir_name
+        )
+        local make_cmd = fmt("cd %s; if [ ! -f '%s.so' ]; then %s -o %s.so ; fi; ", dir_name, name, c_compile, name)
+        local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
+        self:runCmd(clone_cmd)
+        self:runCmd(make_cmd)
+        self:runCmd(copy_binary)
+        print("-- end -- \n")
+    end,
     prepareLuaOpenSSLLibrary = function(self, dir_name, name)
         print("-- begin build lua-openssl -- ")
         local clone_cmd =
@@ -215,4 +232,5 @@ Build:prepareDnsLibrary("m_dnscnt", "mdns")
 Build:prepareSprotoLibrary("sproto", "sproto")
 Build:prepareLpegLibrary("lpeg", "lpeg")
 Build:prepareLuaRedisClientLibrary("lua-resp", "resp")
+Build:prepareSerializeLibrary("lua-serialize", "packer")
 Build:prepareLuaOpenSSLLibrary("lua-openssl", "openssl")
