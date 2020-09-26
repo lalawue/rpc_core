@@ -179,6 +179,30 @@ local function _writeRecord(path, record, key, value)
 end
 
 --[[
+    read bucket info, last gc time
+]]
+local function _readBucketInfo(self, bucket_name)
+    local fp = io.open(string.format("%s/%s.info", self._config.dir, bucket_name), "rb")
+    if fp then
+        local content = fp:read("*a")
+        fp:close()
+        return tonumber(content)
+    end
+    return 0
+end
+
+--[[
+    write bucket info, current gc time
+]]
+local function _writeBucketInfo(self, bucket_name)
+    local fp = io.open(string.format("%s/%s.info", self._config.dir, bucket_name), "wb")
+    if fp then
+        fp:write(tostring(os.time()))
+        fp:close()
+    end
+end
+
+--[[
     load db bucket dir to memory structure _buckets
 ]]
 local function _loadBucketsInfo(self)
@@ -374,36 +398,44 @@ end
     remove deleted record in buckets dat files
 ]]
 function _M:gc(bucket_name)
-    local bucket_info = self._buckets[bucket_name or self._bucket_name]
+    bucket_name = bucket_name or self._bucket_name
+    local bucket_info = self._buckets[bucket_name]
     if bucket_info == nil then
         return false
     end
+    -- get last gc time
+    local last_time = _readBucketInfo(self, bucket_name)
     -- collect rm record entries, include old entry and rm entry
     local rm_tbl = {}
     for fid = 0, bucket_info.max_fid, 1 do
-        local fp = io.open(_fidPath(self, fid, bucket_name), "rb")
-        while fp do
-            local rm_record = _readRecord(fp, true, false)
-            if not rm_record then
-                fp:close()
-                break
-            elseif rm_record.vsize == 0 then
-                -- insert origin record
-                local sfid = tostring(rm_record.fid)
-                if not rm_tbl[sfid] then
-                    rm_tbl[sfid] = {}
+        local fid_path = _fidPath(self, fid, bucket_name)
+        local fattr = FileSystem.attributes(fid_path)
+        -- skip file no modification since last gc, for only collect remove record append
+        if fattr and fattr.modification >= last_time then
+            local fp = io.open(fid_path, "rb")
+            while fp do
+                local rm_record = _readRecord(fp, true, false)
+                if not rm_record then
+                    fp:close()
+                    break
+                elseif rm_record.vsize == 0 then
+                    -- insert origin record
+                    local sfid = tostring(rm_record.fid)
+                    if not rm_tbl[sfid] then
+                        rm_tbl[sfid] = {}
+                    end
+                    table.insert(rm_tbl[sfid], _newRecord(rm_record))
+                    -- insert rm record in realy place
+                    sfid = tostring(fid)
+                    if not rm_tbl[sfid] then
+                        rm_tbl[sfid] = {}
+                    end
+                    rm_record.fid = fid -- rm record realy fid
+                    rm_record.offset = fp:seek("cur") - _rsize - rm_record.ksize - rm_record.vsize
+                    table.insert(rm_tbl[sfid], rm_record)
                 end
-                table.insert(rm_tbl[sfid], _newRecord(rm_record))
-                -- insert rm record in realy place
-                sfid = tostring(fid)
-                if not rm_tbl[sfid] then
-                    rm_tbl[sfid] = {}
-                end
-                rm_record.fid = fid -- rm record realy fid
-                rm_record.offset = fp:seek("cur") - _rsize - rm_record.ksize - rm_record.vsize
-                table.insert(rm_tbl[sfid], rm_record)
-            end
-        end
+            end -- while
+        end -- fattr
     end
     -- if no delete entry
     if next(rm_tbl) == nil then
@@ -450,6 +482,8 @@ function _M:gc(bucket_name)
         end
         table.insert(bucket_info.free_fids, in_fid)
     end
+    -- record this gc time
+    _writeBucketInfo(self, bucket_name)
     return true
 end
 
