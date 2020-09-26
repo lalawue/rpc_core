@@ -10,7 +10,7 @@
     LuaJIT's cdef structure memory layout
 ]]
 local FileSystem = require("base.ffi_lfs")
-local CRCCore = require("middle.ffi_crc32")
+local CRCCore = require("base.ffi_crc32")
 
 local bit = require("bit")
 local ffi = require("ffi")
@@ -47,7 +47,8 @@ local function _bucketCreate(self, name)
     self._buckets[name] = {
         act_fid = 0,
         max_fid = 0,
-        free_fids = {}
+        free_fids = {},
+        kinfo = {}
     }
     FileSystem.mkdir(self._config.dir .. "/" .. name)
 end
@@ -137,7 +138,7 @@ local _rsize = ffi.sizeof("record_t")
 local _record = ffi.new("record_t")
 
 --[[
-    read one record, skip to next record
+    read one record, move file pointer to next record
 ]]
 local function _readRecord(fp, new_record, read_value)
     local content = fp:read(_rsize)
@@ -161,7 +162,7 @@ local function _readRecord(fp, new_record, read_value)
 end
 
 --[[
-    path may be real fp
+    append record to file path
 ]]
 local function _writeRecord(path, record, key, value)
     local fp = io.open(path, "ab+")
@@ -178,7 +179,7 @@ local function _writeRecord(path, record, key, value)
 end
 
 --[[
-    load db bucket dir to memory structure _buckets, default active '0'
+    load db bucket dir to memory structure _buckets
 ]]
 local function _loadBucketsInfo(self)
     local path = self._config.dir
@@ -208,20 +209,21 @@ local function _loadBucketsInfo(self)
 end
 
 --[[
-    load key info
+    load every bucket's key/value
 ]]
 local function _loadKeysInfo(self)
     for _, bucket_info in pairs(self._buckets) do
         local max_fid = bucket_info.max_fid
+        local kinfo = bucket_info.kinfo
         for fid = 0, max_fid, 1 do
             local fp = io.open(_fidPath(self, fid), "rb")
             while fp do
                 local record, key = _readRecord(fp, true, false)
                 if record then
                     if record.vsize > 0 then
-                        self._kinfo[key] = record
+                        kinfo[key] = record
                     else
-                        self._kinfo[key] = nil
+                        kinfo[key] = nil
                     end
                 else
                     fp:close()
@@ -241,51 +243,6 @@ end
 
 local _M = {}
 _M.__index = _M
-
---[[
-    config should be {
-        dir = "/path/to/store/data",
-        file_size = "data file size",
-    }
-]]
-function _M.opendb(config)
-    if not config or type(config.dir) ~= "string" then
-        return nil
-    end
-    FileSystem.mkdir(config.dir)
-    local ins = setmetatable({}, _M)
-    ins._config = {}
-    ins._config.dir = config.dir
-    ins._config.file_size = config.file_size or (64 * 1024 * 1024) -- 64M default
-    ins._bucket_name = "0"
-    ins._buckets = {}
-    ins._kinfo = {}
-    ins._rminfo = {}
-    --[[
-        ins structure as
-        {
-            _config = {
-                dir,                    -- db dir
-                max_file_size           -- db max file size, keep key/value in one entry in priority
-            },
-            _bucket_name = '0',         -- db active bucket name
-            _buckets = {
-                [name] = {
-                    act_fid,            -- active file id in bucket
-                    max_fid,            -- max file id in bucket
-                    free_fids = {       -- free fid slot after delete entries
-                    }
-                }
-            },
-            _kinfo = {                  -- record_t map with key index
-                [key] = record_t
-            }
-        }
-    ]]
-    _loadBucketsInfo(ins)
-    _loadKeysInfo(ins)
-    return ins
-end
 
 --[[
     list all bucket names
@@ -313,11 +270,15 @@ function _M:changeBucket(name)
 end
 
 --[[
-    list all key names
+    list all keys in bucket_name
 ]]
-function _M:allKeys()
+function _M:allKeys(bucket_name)
+    local bucket_info = self._buckets[bucket_name or self._bucket_name]
+    if bucket_info == nil then
+        return {}
+    end
     local tbl = {}
-    for name, _ in pairs(self._kinfo) do
+    for name, _ in pairs(bucket_info.kinfo) do
         tbl[#tbl + 1] = name
     end
     return tbl
@@ -330,7 +291,8 @@ function _M:set(key, value)
     if type(key) ~= "string" or type(value) ~= "string" or key:len() <= 0 or value:len() <= 0 then
         return false
     end
-    local record = self._kinfo[key]
+    local kinfo = self._buckets[self._bucket_name].kinfo
+    local record = kinfo[key]
     if record ~= nil then
         -- check original value
         local fp = io.open(_fidPath(self, record.fid), "rb")
@@ -357,7 +319,7 @@ function _M:set(key, value)
     record.vsize = value:len()
     record.fid, record.offset = _activeFid(self)
     record.crc32 = CRCCore.update(0, key .. value)
-    self._kinfo[key] = record
+    kinfo[key] = record
     -- write to dat file
     if not _writeRecord(_fidPath(self, record.fid), record, key, value) then
         return false
@@ -369,7 +331,8 @@ function _M:get(key)
     if type(key) ~= "string" or key:len() <= 0 then
         return nil
     end
-    local record = self._kinfo[key]
+    local kinfo = self._buckets[self._bucket_name].kinfo
+    local record = kinfo[key]
     if record == nil then
         return nil
     end
@@ -391,11 +354,12 @@ function _M:remove(key)
     if type(key) ~= "string" or key:len() <= 0 then
         return false
     end
-    local record = self._kinfo[key]
+    local kinfo = self._buckets[self._bucket_name].kinfo
+    local record = kinfo[key]
     if record == nil then
         return false
     end
-    self._kinfo[key] = nil
+    kinfo[key] = nil
     record.vsize = 0 -- means to be delete
     local fid = _activeFid(self) -- append to active fid
     if not _writeRecord(_fidPath(self, fid), record, key, nil) then
@@ -410,10 +374,7 @@ end
     remove deleted record in buckets dat files
 ]]
 function _M:gc(bucket_name)
-    if type(bucket_name) ~= "string" then
-        return false
-    end
-    local bucket_info = self._buckets[bucket_name]
+    local bucket_info = self._buckets[bucket_name or self._bucket_name]
     if bucket_info == nil then
         return false
     end
@@ -458,6 +419,7 @@ function _M:gc(bucket_name)
         end
         return false
     end
+    local kinfo = bucket_info.kinfo
     -- merge origin fid, first increase act_fid
     _nextEmptyFid(bucket_info)
     for sfid, tbl in pairs(rm_tbl) do
@@ -476,7 +438,7 @@ function _M:gc(bucket_name)
             elseif in_record.vsize > 0 then
                 -- update kinfo
                 in_record.fid, in_record.offset = _activeFid(self, bucket_name)
-                self._kinfo[in_key] = in_record
+                kinfo[in_key] = in_record
                 -- write to file
                 local out_path = _fidPath(self, in_record.fid, bucket_name)
                 _writeRecord(out_path, in_record, in_key, in_value)
@@ -491,4 +453,50 @@ function _M:gc(bucket_name)
     return true
 end
 
-return _M
+--[[
+    config should be {
+        dir = "/path/to/store/data",
+        file_size = "data file size",   -- default 64M
+    }
+]]
+local function _opendb(config)
+    if not config or type(config.dir) ~= "string" then
+        return nil
+    end
+    FileSystem.mkdir(config.dir)
+    local ins = setmetatable({}, _M)
+    ins._config = {}
+    ins._config.dir = config.dir
+    ins._config.file_size = config.file_size or (64 * 1024 * 1024) -- 64M default
+    ins._bucket_name = "0"
+    ins._buckets = {}
+    --[[
+        ins structure as
+        {
+            _config = {
+                dir,                    -- db dir
+                bucket,                 -- active bucket name when opened
+                file_size               -- keep key/value in one entry in priority
+            },
+            _bucket_name = '0',         -- current active bucket name
+            _buckets = {
+                [name] = {
+                    act_fid,            -- active file id in bucket
+                    max_fid,            -- max file id in bucket
+                    free_fids = {       -- free fid slot after delete entries
+                    }
+                    kinfo = {           -- record_t map with key index
+                        [key] = record_t
+                    }
+                }
+            },
+        }
+    ]]
+    _loadBucketsInfo(ins)
+    _loadKeysInfo(ins)
+    return ins
+end
+
+return {
+    opendb = _opendb
+}
