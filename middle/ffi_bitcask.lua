@@ -10,7 +10,7 @@
     LuaJIT's cdef structure memory layout
 ]]
 local FileSystem = require("base.ffi_lfs")
-local CRCCore = require("base.ffi_crc32")
+local CRCCore = require("ffi_crc32")
 
 local bit = require("bit")
 local ffi = require("ffi")
