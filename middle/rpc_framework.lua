@@ -8,7 +8,7 @@
 local NetCore = require("base.ffi_mnet")
 local RpcDial = require("rpc_framework.rpc_dial.rpc_dial")
 local RpcParser = require("rpc_framework.rpc_parser.rpc_parser")
-local Log = require("middle.logger").newLogger("[RPC]", "trace")
+local Log = require("middle.logger").newLogger("[RPC]", "info")
 
 -- Response for servce
 --
