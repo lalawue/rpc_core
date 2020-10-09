@@ -100,6 +100,7 @@ end
 -- UDP DNS Query
 function App:initUdpQueryChanns()
     local dns_ipv4 = {
+        "114.114.114.114",
         "8.8.8.8",
         "8.8.8.4"
     }

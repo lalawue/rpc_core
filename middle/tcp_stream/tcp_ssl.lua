@@ -124,8 +124,7 @@ end
 
 function ChannSSL:recv()
     if not self._ssl_connected then
-        Log:error("failed to recv for ssl not connected")
-        return false
+        return nil
     end
     if self._rfifo then
         local data = self._rfifo
