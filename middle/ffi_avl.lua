@@ -367,6 +367,31 @@ function _M:walk()
     end
 end
 
+-- use compare_func(dummy_value, v2) to find realy v2
+function _M:find(dummy_value)
+    if dummy_value == nil then
+        return nil
+    end
+    local parent = nil
+    local compare = self._compare
+    _linkInit()
+    while true do
+        parent = _linkChild(self, _sw, nil)
+        if parent == nil then
+            return nil
+        end
+        local parent_value = self._nvmap[parent.key]
+        local hr = compare(dummy_value, parent_value)
+        _linkUpdate(parent)
+        if hr == 0 then
+            return parent_value
+        else
+            _sw = hr
+        end
+    end
+    return nil
+end
+
 -- if value exist, return original value, return nil for sucess
 function _M:insert(value)
     if value == nil then
@@ -449,7 +474,7 @@ local function _new(compare_func)
     ins._nvmap = {} -- node to value
     ins._count = 0 -- total count
     ins._key = 0
-    ins._compare = compare_func -- compare function     
+    ins._compare = compare_func -- compare function
     ffi.gc(
         ins._root,
         function(root)
