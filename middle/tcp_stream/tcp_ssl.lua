@@ -107,7 +107,7 @@ function ChannSSL:setCallback(callback)
 end
 
 function ChannSSL:send(data)
-    if not self._ssl_connected then
+    if not self._ssl_connected or type(data) ~= "string" then
         Log:error("failed to send for ssl not connected")
         return false
     end
