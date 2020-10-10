@@ -156,7 +156,7 @@ function Browser:requestURL(site_url, option)
         local path_args = {domain = url_info.host} -- use HTTP path query string, whatever key
 
         local success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, path_args)
-        if not success then
+        if not success or table.isempty(datas) then
             Log:error("failed to dns '%s'", url_info.host)
             return false
         end

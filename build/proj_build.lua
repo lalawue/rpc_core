@@ -98,34 +98,38 @@ local Build = {
         self:runCmd(copy_binary)
         print("-- end -- \n")
     end,
-    prepareDnsLibrary = function(self, dir_name, name)
-        print("-- begin build mdns -- ")
+    prepareNetLibrary = function(self, dir_name, name)
+        print("-- begin build m_net -- ")
         local clone_cmd =
-            fmt(
-            "if [ ! -d '%s' ]; then git clone https://github.com/lalawue/m_dnscnt.git --depth 1; cd %s; git submodule update --depth 1 --init --recursive; fi;",
-            dir_name,
-            dir_name
-        )
-        local git_update_cmd = "git pull origin master"
-        local update_cmd =
-            fmt(
-            "if [ -d '%s' ]; then cd %s; make clean; %s; cd vendor/m_foundation/; %s; cd ../m_net; %s; fi;",
-            dir_name,
-            dir_name,
-            git_update_cmd,
-            git_update_cmd,
-            git_update_cmd
-        )
-        local make_cmd = fmt("cd %s; if [ ! -f 'build/%s' ]; then %s; fi; ", dir_name, self:binaryName(name), self.MAKE)
-        self:runCmd(update_cmd)
+            fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/m_net.git --depth 1; fi;", dir_name)
+        local make_cmd =
+            fmt("cd %s; if [ ! -f 'build/%s' ]; then %s lib; fi; ", dir_name, self:binaryName(name), self.MAKE)
+        local copy_binary =
+            fmt("cd %s; cp build/%s %s/%s", dir_name, self:binaryName(name), binary_dir, self:binaryName(name))
         self:runCmd(clone_cmd)
         self:runCmd(make_cmd)
-        local binaries = {"mfoundation", "mnet", "mdns"}
-        for _, v in ipairs(binaries) do
-            local libname = self:binaryName(v)
-            local copy_binary = fmt("cd %s; cp build/%s %s/%s", dir_name, libname, binary_dir, libname)
-            self:runCmd(copy_binary)
-        end
+        self:runCmd(copy_binary)
+        print("-- end -- \n")
+    end,
+    prepareDnsLibrary = function(self, dir_name, name)
+        print("-- begin build mdns_utils -- ")
+        local c_sources = "mdns_utils.c"
+        local clone_cmd =
+            fmt("if [ ! -d '%s' ]; then git clone https://github.com/lalawue/m_dnsutils.git --depth 1; fi;", dir_name)
+        local make_cmd =
+            fmt(
+            "cd %s; if [ ! -f '%s.so' ]; then %s %s %s -o %s.so; fi;",
+            dir_name,
+            name,
+            self.CC,
+            self.CFLAGS,
+            c_sources,
+            name
+        )
+        local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
+        self:runCmd(clone_cmd)
+        self:runCmd(make_cmd)
+        self:runCmd(copy_binary)
         print("-- end -- \n")
     end,
     prepareSprotoLibrary = function(self, dir_name, name)
@@ -228,7 +232,8 @@ os.execute("sleep 3")
 
 Build:prepareCJsonLibrary("lua-cjson", "cjson")
 Build:prepareHyperparserLibrary("hyperparser", "hyperparser")
-Build:prepareDnsLibrary("m_dnscnt", "mdns")
+Build:prepareNetLibrary("m_net", "mnet")
+Build:prepareDnsLibrary("m_dnsutils", "mdns_utils")
 Build:prepareSprotoLibrary("sproto", "sproto")
 Build:prepareLpegLibrary("lpeg", "lpeg")
 Build:prepareLuaRedisClientLibrary("lua-resp", "resp")
