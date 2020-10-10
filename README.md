@@ -218,6 +218,5 @@ Thanks people provide libraries below:
 - [ColonelThirtyTwo/lsqlite3-ffi](https://github.com/ColonelThirtyTwo/lsqlite3-ffi), Lua SQLite using LuaJIT's FFI library
 - [cloudwu/lua-serialize](https://github.com/cloudwu/lua-serialize), Serialize lua objects into a binary block
 - [m_net](https://github.com/lalawue/m_net)
-- [m_foundation](https://github.com/lalawue/m_foundation)
-- [m_dnscnt](https://github.com/lalawue/m_dnscnt)
+- [m_dnsutils](https://github.com/lalawue/m_dnsutils)
 - [ffi_bitcask.lua](https://github.com/lalawue/ffi_bitcask.lua)
