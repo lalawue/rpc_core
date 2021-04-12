@@ -44,7 +44,7 @@ ffi.cdef [[
 local DnsCore = ffi.load("mdns_utils")
 local NetCore = require("base.ffi_mnet")
 local UrlCore = require("middle.url")
-local AvlTree = require("middle.ffi_avl")
+local AvlTree = require("middle.avl")
 local AppFramework = require("middle.app_framework")
 local Log = require("middle.logger").newLogger("[DNS]", "debug")
 
