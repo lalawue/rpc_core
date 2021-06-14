@@ -202,7 +202,6 @@ or apps/service_objdb using RESP (Redis Protocol specification 2) for object sto
 Thanks people provide libraries below:
 
 - [LuaJIT](http://luajit.org/), a Just-In-Time Compiler for Lua by Mike Pall 
-- [kikito/middleclass](https://github.com/kikito/middleclass), Object-orientation for Lua
 - [sonoro1234/luafilesystem](https://github.com/sonoro1234/luafilesystem), Reimplement luafilesystem via LuaJIT FFI with unicode facilities
 - [hamishforbes/lua-ffi-zlib](https://github.com/hamishforbes/lua-ffi-zlib)
 - [pkulchenko/serpent](https://github.com/pkulchenko/serpent), Lua serializer and pretty printer
