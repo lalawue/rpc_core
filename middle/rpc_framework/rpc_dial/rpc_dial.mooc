@@ -1,0 +1,61 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import TcpRaw from "rpc_framework.rpc_dial.tcp_raw"
+import HttpJson from "rpc_framework.rpc_dial.http_json"
+import LuaSproto from "rpc_framework.rpc_dial.lua_sproto"
+import LuaResp from "rpc_framework.rpc_dial.lua_resp"
+Log = require("middle.logger")("[RPC]", "error")
+
+local All_Dials = {
+    AppEnv.Prototols.TCP_RAW : TcpRaw,
+    AppEnv.Prototols.HTTP_JSON : HttpJson,
+    AppEnv.Prototols.LUA_SPROTO : LuaSproto,
+    AppEnv.Prototols.LUA_RESP : LuaResp,
+}
+
+struct RpcDial {
+
+    _dial = false
+
+    -- rpc_args will encode as path in HTTP_JSON psec
+    fn callMethod(rpc_info, rpc_opt, rpc_args, rpc_body) {
+        if rpc_info == nil {
+            Log:error("invalid call method param")
+            return
+        }
+        dial = All_Dials[rpc_info.proto]
+        if dial {
+            self._dial = dial.newRequest(rpc_info, rpc_opt, rpc_args, rpc_body)
+        } else {
+            Log:error("failed to find dial %s", rpc_info.proto)
+        }
+    }
+
+    fn responseMethod(rpc_info, rpc_opt, rpc_body) {
+        if rpc_info == nil {
+            Log:error("invalid response method param")
+            return
+        }
+        dial = All_Dials[rpc_info.proto]
+        if dial {
+            self._dial = dial.newResponse(rpc_info, rpc_opt, rpc_body)
+        } else {
+            Log:error("failed to find dial %s", rpc_info.proto)
+        }
+    }
+
+    fn makePackage(status_code, err_message) {
+        if not self._dial {
+            Log:error("failed to make package for invalid dial object")
+            return
+        }
+        return self._dial:makePackage(status_code, err_message)
+    }
+}
+
+return RpcDial

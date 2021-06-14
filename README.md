@@ -156,7 +156,7 @@ like apps/agent_test, create middle.http_browser instance, request gziped HTML p
 ```lua
 local AppFramework = require("middle.app_framework")
 local Browser = require("middle.http_browser")
-local Log = require("middle.logger").newLogger("[AgentExample]", "info")
+local Log = require("middle.logger")("[AgentExample]", "info")
 
 local AppExample = Class("AgentExample", AppFramework)
 
@@ -177,7 +177,7 @@ end
 
 -- coroutine business
 function AppExample:startBusiness(rpc_framework)
-   local browser = Browser.newBrowser({ timeout = 30, inflate = true })
+   local browser = Browser({ timeout = 30, inflate = true })
    local success, http_header, content = browser:openURL(self.m_domain)
    Log:info("reqeust result: %s", success)
    table.dump(http_header)

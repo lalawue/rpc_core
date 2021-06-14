@@ -23,4 +23,4 @@ else
 fi
 
 # luajit invoke
-exec luajit app_launcher.lua $*
+exec moocscript app_launcher.mooc $*

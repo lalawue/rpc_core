@@ -1,0 +1,80 @@
+-- 
+-- Copyright (c) 2020 lalawue
+-- 
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import CJson from "cjson"
+import UrlCore from "middle.url"
+
+fn _fixedHttpHeaderString() {
+    return "User-Agent: RpcDialv20200126\nContent-Type: application/json; charset=utf-8\n"
+}
+
+struct Dail {
+    _type = false
+    _info = false -- server info
+    _query = "" -- query string
+    _method = false -- POST or PUT when brings data
+    _body = false
+
+    static fn newRequest(rpc_info, rpc_opt, rpc_args, rpc_body) {
+        if rpc_info {
+            self = Self()
+            self._type = "REQUEST"
+            self._info = rpc_info
+            if type(rpc_args) == "table" {
+                self._query = "?" .. UrlCore.buildQuery(rpc_args)
+            } else {
+                self._query = ""
+            }
+            self._body = rpc_body
+            self._method = type(rpc_opt) == "table" and rpc_opt["method"] or false -- like PUT, UPDATE
+            return self
+        }
+    }
+
+    static  fn newResponse(rpc_info, rpc_opt, rpc_body) {
+        if rpc_info {
+            self = Self()
+            self._type = "RESPONSE"
+            self._info = rpc_info
+            self._body = rpc_body
+            return self
+        }
+    }
+
+    fn makePackage(status_code, err_message) {
+        if not self._type {
+            return
+        }
+        data = self._body and CJson.encode( self._body ) or ""
+        if self._type == "REQUEST" {
+            http_method = "GET"
+            if data:len() > 2 {
+                if self._method {
+                    http_method = self._method
+                } else {
+                    http_method = "POST"
+                }
+            }
+            path = self._info.name .. self._query
+            output = http_method .. " /" .. path .. " HTTP/1.1\n"
+                .. _fixedHttpHeaderString()
+                .. "Content-Length: " .. data:len() .. "\n\n"
+                .. data
+            return output
+        } else {
+            code = status_code or 200
+            status_str = err_message or (code == 200 and "200 OK\n" or "403 Forbidden\n")
+            output = "HTTP/1.1 " .. status_str
+                .. _fixedHttpHeaderString()
+                .. "Content-Length: " .. data:len() .. "\n\n"
+                .. data
+            return output
+        }
+    }
+}
+
+return Dail

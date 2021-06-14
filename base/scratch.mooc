@@ -1,0 +1,134 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+-- export to global
+
+import serpent from "base.serpent"
+
+-- string
+--
+
+fn string.split(self, sSeparator, nMax, bRegexp) {
+    assert(sSeparator ~= "")
+    assert(nMax == nil or nMax >= 1)
+    aRecord = {}
+    if self:len() > 0 {
+        bPlain = not bRegexp
+        nMax = nMax or -1
+        nField, nStart = 1, 1
+        nFirst, nLast = self:find(sSeparator, nStart, bPlain)
+        while nFirst and nMax ~= 0 {
+            aRecord[nField] = self:sub(nStart, nFirst - 1)
+            nField = nField + 1
+            nStart = nLast + 1
+            nFirst, nLast = self:find(sSeparator, nStart, bPlain)
+            nMax = nMax - 1
+        }
+        aRecord[nField] = self:sub(nStart)
+    } else {
+        aRecord[1] = ""
+    }
+    return aRecord
+}
+
+-- table
+--
+
+fn table.dump(tbl) {
+    io.write(serpent.block(tbl) .. "\n")
+}
+
+-- return a readonly table
+fn table.readonly(tbl, err_message) {
+    return setmetatable({}, {
+            __index : tbl,
+            __newindex : fn(t, k, v) {
+                error(err_message, 2)
+            }
+        }
+    )
+}
+
+fn _deep_copy(object, lookup_table) {
+    if type(object) ~= "table" {
+        return object
+    } elseif lookup_table[object] {
+        return lookup_table[object]
+    }
+    new_object = {}
+    lookup_table[object] = new_object
+    for key, value in pairs(object) {
+        new_object[_deep_copy(key, lookup_table)] = _deep_copy(value, lookup_table)
+    }
+    return setmetatable(new_object, getmetatable(object))
+}
+
+if table.clone == nil {
+    fn table.clone(o) {
+        return _deep_copy(o, {})
+    }
+}
+
+-- is empty
+if table.isempty == nil {
+    fn table.isempty(t) {
+        return type(t) == "table" and _G.next(t) == nil
+    }
+}
+
+if table.isarray == nil {
+    fn table.isarray(t) {
+        if type(t) ~= "table" {
+            return false
+        }
+        i = 0
+        for _ in pairs(t) {
+            i = i + 1
+            if t[i] == nil {
+                return false
+            }
+        }
+        return true
+    }
+}
+
+-- io
+--
+
+fn io.printf(fmt, ...) {
+    if not fmt {
+        os.exit(0)
+    }
+    io.write(string.format(fmt, ...) .. "\n")
+}
+
+-- language
+--
+
+-- validate input parameter is valid type described in type_desc, only 1 depth
+_type_string = {
+    "I" : "nil",
+    "N" : "number",
+    "S" : "string",
+    "B" : "boolean",
+    "T" : "table",
+    "F" : "function",
+    "D" : "thread",
+    "U" : "userdata"
+}
+
+export struct Lang {
+    fn valid(type_desc, ...) {
+        for i = 1, type_desc:len(), 1 {
+            val = select(i, ...)
+            if type(val) ~= _type_string[type_desc:sub(i, i)] {
+                return false
+            }
+        }
+        return true
+    }
+}

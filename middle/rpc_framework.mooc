@@ -1,0 +1,213 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import NetCore from "base.ffi_mnet"
+import RpcDial from "rpc_framework.rpc_dial.rpc_dial"
+import RpcParser from "rpc_framework.rpc_parser.rpc_parser"
+Log = require("middle.logger")("[RPC]", "info")
+
+-- Response for servce
+--
+struct RpcResponse {
+
+    _chann = false
+    _info = false
+    _signature = false
+
+    -- build http headers and send
+    fn init(chann, rpc_info) {
+        self._chann = chann
+        self._info = rpc_info
+    }
+
+    -- can send multiple times
+    fn sendResponse(object) {
+        if not self._chann {
+            Log:error("rpc_response invalid chann !")
+            return
+        }
+        dial = RpcDial()
+        dial:responseMethod(self._info, nil, object)
+        packed = dial:makePackage()
+        self._chann:send(packed)
+    }
+
+    -- peer's ip:port as signature
+    fn peerSignature() {
+        if not self._signature {
+            addr = self._chann:addr()
+            self._signature = addr.ip .. ":" .. tostring(addr.port)
+        }
+        return self._signature
+    }
+}
+
+-- Framework
+--
+local AllLoopCallbackTable = {} -- chann index in callback
+
+local fn _closeChannAndParser(service_info, chann, rpc_parser, keep_alive) {
+    if keep_alive {
+        Log:trace("'%s' keepalive: %s", service_info.name, chann)
+    } elseif chann and rpc_parser {
+        Log:trace("'%s' disconnect: %s", service_info.name, chann)
+        chann:close()
+        rpc_parser:destroy()
+    }
+}
+
+struct Framework {
+
+    static fn initFramework() {
+        NetCore.init()
+    }
+    -- service_handler is a callback function(proto_info, request_object, rpc_response) end,
+    -- service_handler return false to shutdown connection
+    static fn newService(service_info, service_handler) {
+        if type(service_info) ~= "table" or type(service_handler) ~= "function" {
+            Log:error("rpc_framework new service invalid params, %s", debug.traceback())
+            return false
+        }
+
+        -- setup tcp listen
+        chann_listen = NetCore.openChann("tcp")
+        chann_listen:listen(service_info.ipv4, service_info.port, 16)
+        chann_listen:setCallback({ _, _, accept, c_msg in
+            if accept == nil {
+                return
+            }
+            Log:info("'%s' connected: %s", service_info.name, accept)
+
+            -- setup rpc parser
+            rpc_parser = RpcParser.newRequest(service_info)
+            accept:setCallback({ chann, event_name, _, _ in
+                to_close = false
+                if event_name == "event_recv" {
+                    data = chann:recv()
+                    if data {
+                        ret, proto_info, request_object = rpc_parser:process(data)
+                        if ret < 0 {
+                            to_close = true
+                        } elseif proto_info {
+                            rpc_response = RpcResponse(chann, service_info)
+                            to_close = not service_handler(proto_info, request_object, rpc_response)
+                        }
+                    } else {
+                        to_close = true
+                    }
+                } elseif event_name == "event_disconnect" {
+                    to_close = true
+                }
+
+                if to_close {
+                    _closeChannAndParser(service_info, chann, rpc_parser, false)
+                }
+            }) -- callback
+        })
+
+        Log:info("rpc_framework start service '%s' at '%s:%d'", service_info.name, service_info.ipv4, service_info.port)
+        return true
+    }
+
+    -- call from coroutine, path_args and body_args refers to HTTP path and body
+    -- return 'true/false, return_object, reuse_info'
+    --[[
+        option_args as {
+            timeout = seconds,
+            ipv4 = service_ipv4,
+            keep_alive = keep_tcp_connection,
+            reuse_info = connection_info modified by framework
+        }
+    ]]
+    static fn newRequest(service_info, option_args, path_args, body_args) {
+        thread = coroutine.running()
+        if thread == nil {
+            Log:error("rpc_framework request should call from coroutine")
+            return false
+        }
+        if type(service_info) ~= "table" {
+            Log:error("rpc_framework request params invalid, %s", debug.traceback())
+            return false
+        }
+
+        -- reuse chann or create new one, assume service_info are the same
+        chann = option_args and option_args.reuse_info or NetCore.openChann("tcp")
+
+        if chann:state() == "state_connected" {
+            Log:trace("'%s' reuseinfo: %s", service_info.name, chann)
+            request = RpcDial()
+            request:callMethod(service_info, nil, path_args, body_args)
+            chann:send(request:makePackage())
+        } else {
+            -- create new chann then create new parser
+            rpc_parser = RpcParser.newResponse(service_info)
+            fn callback(chann, event_name, _, _) {
+                to_resume = nil
+                ret_object = nil
+                if event_name == "event_connected" {
+                    Log:trace("'%s' connected: %s", service_info.name, chann)
+                    local request = RpcDial()
+                    request:callMethod(service_info, nil, path_args, body_args)
+                    chann:send(request:makePackage())
+                } elseif event_name == "event_recv" {
+                    ret, proto, response_object = rpc_parser:process(chann:recv())
+                    if ret < 0 {
+                        to_resume = false
+                    } elseif proto {
+                        to_resume = true
+                        ret_object = response_object
+                    }
+                } elseif event_name == "event_disconnect" or event_name == "event_timer" {
+                    to_resume = false
+                }
+
+                if to_resume ~= nil {
+                    _closeChannAndParser(service_info, chann, rpc_parser, option_args.keep_alive)
+                    option_args.reuse_info = option_args.keep_alive and chann or nil
+                    coroutine.resume(thread, to_resume, ret_object)
+                }
+            }
+            chann:setCallback(callback)
+            --Log:debug("try connect %s", option_args.ipv4 or service_info.ipv4)
+            chann:connect(option_args.ipv4 or service_info.ipv4, service_info.port)
+            chann:activeEvent("event_timer", tonumber(option_args.timeout or AppEnv.Config.RPC_TIMEOUT) * 1000000)
+        }
+        -- yeild recv or disconnect
+        return coroutine.yield()
+    }
+
+    -- callback function(chann_key, "event_loop")
+    -- return index
+    static fn setLoopEvent(key, check_stop, finalizer) {
+        if not check_stop {
+            Log:error("invalid loop callback")
+        }
+        AllLoopCallbackTable[key] = { :check_stop, :finalizer }
+    }
+
+    static fn pollForever(timeout_second) {
+        millisecond = timeout_second and (tonumber(timeout_second) * 1000) or 1000
+        del_tbl = {}
+        while true {
+            for key, func in pairs(AllLoopCallbackTable) {
+                if func.check_stop() {
+                    if func.finalizer {
+                        func.finalizer()
+                    }
+                    del_tbl[#del_tbl + 1] = key
+                }
+            }
+            for _, key in ipairs(del_tbl) {
+                AllLoopCallbackTable[key] = nil
+            }
+            del_tbl[1] = nil
+            NetCore.poll(millisecond)
+        }
+    }
+}
+
+return Framework

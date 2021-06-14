@@ -1,0 +1,101 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+support_arch = { "x86" : "", "x64" : ""}
+support_os = { "Linux" : "", "OSX" : "", "BSD" : "", "Windows" : ""}
+if jit and support_arch[jit.arch] and support_os[jit.os] {
+    -- supported arch and os
+} else {
+    print("only support LuaJIT with arch [x86|x64], os [Linux|OSX|BSD|Windows]")
+    os.exit(0)
+}
+
+-- get app_name
+app_name = ...
+
+-- get app_env_config
+env_config_path = os.getenv("APP_ENV_CONFIG")
+if env_config_path {
+    print("APP_ENV_CONFIG: " .. env_config_path)
+} else {
+    env_config_path = "config/app_env.mooc"
+    print("APP_ENV_CONFIG: not set, use config/app_env.mooc instead")
+}
+
+-- detect app_env_config file exist
+fp = io.open(env_config_path)
+if not fp {
+    print("failed to open config:", env_config_path)
+    os.exit(0)
+} else {
+    fp:close()
+}
+
+fn tracebackHandler(msg) {
+    print("\nPANIC : " .. tostring(msg) .. "\n")
+    print(debug.traceback())
+}
+
+status = false
+
+-- treat Class as keyword
+import Core from "moocscript.core"
+import "base.scratch"
+
+-- load AppEnv as global
+export status, AppEnv = xpcall(Core.dofile, tracebackHandler, env_config_path)
+if not status {
+    os.exit(0)
+} else {
+    assert(AppEnv)
+}
+
+-- get apps_dir
+apps_dir = "apps"
+if type(AppEnv.Config.APP_DIR) == "string" and string.len(AppEnv.Config.APP_DIR) > 0 {
+    apps_dir = AppEnv.Config.APP_DIR
+}
+
+-- list apps if no app_name provide
+if type(app_name) ~= "string" {
+    lfs = require("base.ffi_lfs")
+    print("supported apps:")
+    _listApps = { path in
+        if path:len() <= 0 {
+            return
+        }
+        for fname in lfs.dir(path) {
+            attr = lfs.attributes(path .. "/" .. fname)
+            if attr.mode == "directory" and fname:len() > 2 and fname:sub(1, 1) ~= "." {
+                print("", fname)
+            }
+        }
+    }
+    _listApps(apps_dir)
+    os.exit(0)
+} else {
+    package.path = package.path .. string.format(";%s/%s/?.lua", apps_dir, app_name)
+}
+
+-- setup TMP_DIR, DATA_DIR
+if jit.os == "Windows" {
+    os.execute("mkdir " .. AppEnv.Config.TMP_DIR .. " 2>nul")
+    os.execute("mkdir " .. AppEnv.Config.DATA_DIR .. " 2>nul")
+} else {
+    os.execute("mkdir -p " .. AppEnv.Config.TMP_DIR)
+    os.execute("mkdir -p " .. AppEnv.Config.DATA_DIR)
+}
+
+-- create app instance, app:initialize(...) then app:launch()
+app_path = string.format("%s/%s/main.mooc", apps_dir, app_name)
+st, app_clazz = xpcall(Core.loadfile, tracebackHandler, app_path)
+if st and type(app_clazz) == "function" {
+    app_instance = app_clazz()(...)
+    app_instance:launch()
+} else {
+    print(string.format("\n[Launcher] failed to load '%s' from '%s'\n", app_name, apps_dir))
+}

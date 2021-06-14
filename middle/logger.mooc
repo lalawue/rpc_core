@@ -1,0 +1,76 @@
+--
+-- Copyright (c) 2019 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+local _level_name_number = {
+    "debug" : 1,
+    "trace" : 2,
+    "info" : 3,
+    "warn" : 4,
+    "error" : 5
+}
+
+local _fpTagPrintf = fn() {
+}
+
+struct Logger {
+    _name = "[Logger] "
+    _level = 1
+    _tags = false
+
+    -- set output file in app:initialize()
+    fn setOutputFile(file_path) {
+        fp = (type(file_path) == "string") and io.open(file_path, "ab+") or nil
+        if fp {
+            _fpTagPrintf = fn(content) {
+                fp:write(content .. "\n")
+                fp:flush()
+            }
+        }
+    }
+
+    -- 'debug', 'info', 'warn', 'error'
+    fn init(tag_name, level_name) {
+        self._name = tag_name and (tag_name .. " ") or "[Log] "
+        self._level = _level_name_number[level_name] or 1
+        tbl = {}
+        for k, v in pairs(_level_name_number) {
+            tbl[tonumber(v)] = k:sub(1, 1):upper() .. "." .. tag_name .. " "
+        }
+        self._tags = tbl
+    }
+
+    fn _log(level_name, fmt, ...) {
+        number = _level_name_number[level_name] or 5
+        if number >= self._level {
+            tag = self._tags[number]
+            io.write(tag .. string.format(fmt, ...) .. "\n")
+            _fpTagPrintf(tag .. string.format(fmt, ...))
+        }
+    }
+
+    fn error(fmt, ...) {
+        self:_log("error", fmt, ...)
+    }
+
+    fn warn(fmt, ...) {
+        self:_log("warn", fmt, ...)
+    }
+
+    fn info(fmt, ...) {
+        self:_log("info", fmt, ...)
+    }
+
+    fn trace(fmt, ...) {
+        self:_log("trace", fmt, ...)
+    }
+
+    fn debug(fmt, ...) {
+        self:_log("debug", fmt, ...)
+    }
+}
+
+return Logger

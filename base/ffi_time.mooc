@@ -1,0 +1,73 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import ffi from "ffi"
+
+ffi.cdef([[
+struct tm {
+    int tm_sec;     /* seconds (0 - 60) */
+    int tm_min;     /* minutes (0 - 59) */
+    int tm_hour;    /* hours (0 - 23) */
+    int tm_mday;    /* day of month (1 - 31) */
+    int tm_mon;     /* month of year (0 - 11) */
+    int tm_year;    /* year - 1900 */
+    int tm_wday;    /* day of week (Sunday = 0) */
+    int tm_yday;    /* day of year (0 - 365) */
+    int tm_isdst;   /* is summer time in effect? */
+    char *tm_zone;  /* abbreviation of timezone name */
+    long tm_gmtoff; /* offset from UTC in seconds */
+};
+
+typedef int32_t time_t;
+time_t time(time_t *dst_time);
+struct tm *gmtime(const time_t *src_time);
+time_t timegm(struct tm *timeptr);
+]])
+
+struct M {
+
+    -- return UTC time()
+    static fn timeUTC() {
+        pt = ffi.new("time_t[1]")
+        ffi.C.time(pt)
+        return ffi.C.timegm(ffi.C.gmtime(pt))
+    }
+
+    --[[ return UTC struct tm as gmtime()
+    int tm_sec;     /* seconds (0 - 60) */
+    int tm_min;     /* minutes (0 - 59) */
+    int tm_hour;    /* hours (0 - 23) */
+    int tm_mday;    /* day of month (1 - 31) */
+    int tm_mon;     /* month of year (0 - 11) */
+    int tm_year;    /* year - 1900 */
+    int tm_wday;    /* day of week (Sunday = 0) */
+    int tm_yday;    /* day of year (0 - 365) */
+    ]]
+    static fn tmUTC() {
+        pt = ffi.new("time_t[1]")
+        ffi.C.time(pt)
+        return ffi.C.gmtime(pt)
+    }
+
+    -- return '2020-03-08T01:27:30Z', https://www.ietf.org/rfc/rfc3339.txt
+    static fn dateTimeStringUTC() {
+        m = Self.tmUTC()
+        m.tm_year = m.tm_year + 1900
+        m.tm_mon = m.tm_mon + 1
+        return string.format("%4d-%02d-%02dT%02d:%02d:%02dZ", m.tm_year, m.tm_mon, m.tm_mday, m.tm_hour, m.tm_min, m.tm_sec)
+    }
+
+    -- tm_year as 2020, tm_mon from 1 - 12
+    static fn tmCompatUTC() {
+        m = Self.tmUTC()
+        m.tm_year = m.tm_year + 1900
+        m.tm_mon = m.tm_mon + 1
+        return m
+    }
+}
+
+return M

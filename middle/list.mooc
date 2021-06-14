@@ -1,0 +1,182 @@
+--
+-- Copyright (c) 2021 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+class List {
+
+    fn init(t) {
+        self._count = 0
+        self._first = nil
+        self._last = nil
+        self._value = {}
+        self._prev = {}
+        self._next = {}
+        if type(t) == "table" {
+            for _, v in pairs(t) {
+                self:pushf(v)
+            }
+        }
+    }
+
+    -- list count
+    fn count() {
+        return self._count
+    }
+
+    -- first element in list
+    fn first() {
+        return self._first
+    }
+
+    -- last element in list
+    fn last() {
+        return self._last
+    }
+
+    -- contains
+    fn contains(value) {
+        if value == nil {
+            return false
+        }
+        return self._value[value]
+    }
+
+    -- push to first
+    fn pushf(value) {
+        if value == nil or self:contains(value) {
+            return false
+        }
+        self._next[value] = self._first
+        if self._first == nil {
+            self._first = value
+            self._last = value
+        } else {
+            self._prev[self._first] = value
+            self._first = value
+        }
+        self._value[value] = true
+        self._count += 1
+        return true
+    }
+
+    -- push to last
+    fn pushl(value) {
+        if value == nil or self:contains(value) {
+            return false
+        }
+        self._prev[value] = self._last
+        if self._last == nil {
+            self._first = value
+            self._last = value            
+        } else {
+            self._next[self._last] = value
+            self._last = value
+        }
+        self._value[value] = true
+        self._count += 1
+        return true
+    }
+
+    -- remove element in list
+    fn remove(value) {
+        if value == nil or not self:contains(value) {
+            return nil
+        }
+        ne = self._next[value]
+        pr = self._prev[value]
+        if ne ~= nil {
+            self._prev[ne] = pr
+        }
+        if pr ~= nil {
+            self._next[pr] = ne
+        }
+        self._next[value] = nil
+        self._prev[value] = nil
+        self._value[value] = nil
+        if value == self._first {
+            self._first = ne
+        }
+        if value == self._last {
+            self._last = pr
+        }
+        self._count -= 1
+        return value
+    }
+
+    -- pop first element
+    fn popf() {
+        return self:remove(self._first)
+    }
+
+    -- pop last element
+    fn popl() {
+        return self:remove(self._last)
+    }
+
+    -- with range index
+    fn range(fr, to) {
+        fr = fr or 1
+        to = to or self._count
+        if self._count <= 0 or math.min(fr,to) < 1 or math.max(fr,to) > self._count {
+            return {}
+        }
+        range = {}
+        step = (fr < to) and 1 or -1
+        idx = (step > 0) and 1 or self._count
+        value = (step > 0) and self._first or self._last
+        if fr > to {
+            fr, to = to, fr
+        }
+        repeat {
+            if idx >= fr and idx <= to {
+                range[#range + 1]= value
+            }
+            idx += step
+            if step > 0 {
+                value = self._next[value]
+                if idx > to {
+                    break
+                }
+            } else {
+                value = self._prev[value]
+                if idx < fr {
+                    break
+                }
+            }
+        } until value == nil
+        return range
+    }
+
+    -- with element iterator
+    fn walk(seq) {
+        if self._count <= 0 {
+            return fn() { return nil }
+        }
+        if seq == nil {
+            seq = true
+        }
+        idx = seq and 1 or self._count
+        step = seq and 1 or -1
+        value = seq and self._first or self._last
+        return fn() {
+            if value ~= nil {
+                i = idx
+                v = value
+                idx += step
+                if seq {
+                    value = self._next[value]
+                } else {
+                    value = self._prev[value]
+                }
+                return i, v
+            } else {
+                return nil
+            }
+        }
+    }
+}
+
+return List

@@ -1,0 +1,44 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import RpcFramework from "middle.rpc_framework"
+Log = require("middle.logger")("[App]", "info")
+
+-- app framework, start app business in coroutine
+class AppFramework {
+
+   -- for subclass
+   -- function App:initialize(...)
+   -- end
+
+   -- launch app
+   fn launch() {
+      RpcFramework.initFramework()
+      Log:info("'%s' load business", self.typename)
+      self:loadBusiness(RpcFramework)
+      co = coroutine.create({ _ in
+         Log:info("'%s' start business coroutine", self.typename)
+         self:startBusiness(RpcFramework)
+      })
+      coroutine.resume(co)
+      RpcFramework.pollForever(self._app_timeout)
+   }
+
+   -- MARK: for subclass
+
+   -- for subclass, no coroutine
+   fn loadBusiness(rpc_framework) {
+      -- load your business code here
+   }
+
+   -- for subclass, coroutine business
+   fn startBusiness(rpc_framework) {
+      -- start your business code here
+   }
+}
+
+return AppFramework

@@ -1,0 +1,77 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import Bit from "bit"
+
+local _parser = AppEnv.Store[AppEnv.Prototols.LUA_SPROTO]
+
+struct SprotoParser {
+    _info = false
+    _func = false
+    _data = ""
+    _len = false
+
+    static fn newRequest(rpc_info) {
+        parser = Self()
+        parser._info = rpc_info
+        parser._func = _parser.request_decode
+        return parser
+    }
+
+    static fn newResponse(rpc_info) {
+        parser = Self()
+        parser._info = rpc_info
+        parser._func = _parser.response_decode
+        return parser
+    }
+
+    -- return ret_value, proto_info, data_table
+    -- the proto_info would be http_header_table
+    fn process(data) {
+        if type(data) != "string" {
+            return -1
+        }
+        self._data = self._data .. data
+        if self._data:len() < 2 {
+            return 0
+        }
+        if not self._len {
+            h8 = self._data:byte(1)
+            l8 = self._data:byte(2)
+            self._len = Bit.lshift(h8, 8) + Bit.band(l8, 0xff)
+            self._data = self._data:sub(3)
+        }
+
+        if self._data:len() < self._len {
+            return 0
+        }
+
+        content = self._data
+        if content:len() > self._len {
+            content = self._data:sub(1, self._len)
+        }
+        ret_decode, object, name_tag = pcall(self._func, _parser, self._info.name, content)
+        if ret_decode {
+            if object {
+                name_tag = { "name" : self._info.name }
+                self._data = ""
+            } else {
+                name_tag = nil
+                object = nil
+            }
+            return 1, name_tag, object
+        }
+        return 0
+    }
+
+    fn destroy() {
+        self._data = ""
+        self._len = false
+    }
+}
+
+return SprotoParser

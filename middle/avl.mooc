@@ -1,0 +1,475 @@
+--
+-- Copyright (c) 2021 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+--[[
+   code sample from https://github.com/skywind3000/avlmini
+]]
+
+-- MARK: Private
+
+fn _leftHeight(self, key) {
+    left = self._left[key]
+    return (left ~= nil) and self._height[left] or 0
+}
+
+fn _rightHeight(self, key) {
+    right = self._right[key]
+    return (right ~= nil) and self._height[right] or 0
+}
+
+fn _childReplace(self, oldkey, newkey, parent) {
+    if parent ~= nil {
+        if self._left[parent] == oldkey {
+            self._left[parent] = newkey
+        } else {
+            self._right[parent] = newkey
+        }
+    } else {
+        self._head = newkey
+    }
+}
+
+fn _rotateLeft(self, key) {
+    right = self._right[key]
+    parent = self._parent[key]
+    self._right[key] = self._left[right]
+    if self._left[right] ~= nil {
+        self._parent[self._left[right]] = key
+    }
+    self._left[right] = key
+    self._parent[right] = parent
+    _childReplace(self, key, right, parent)
+    self._parent[key] = right
+    return right
+}
+
+fn _rotateRight(self, key) {
+    left = self._left[key]
+    parent = self._parent[key]
+    self._left[key] = self._right[left]
+    if self._right[left] ~= nil {
+        self._parent[self._right[left]] = key
+    }
+    self._right[left] = key
+    self._parent[left] = parent
+    _childReplace(self, key, left, parent)
+    self._parent[key] = left
+    return left     
+}
+
+fn _updateHeight(self, key) {
+    h0 = _leftHeight(self, key)
+    h1 = _rightHeight(self, key)
+    self._height[key] = math.max(h0, h1) + 1
+}
+
+fn _fixLeft(self, key) {
+    right = self._right[key]
+    h0 = _leftHeight(self, right)
+    h1 = _rightHeight(self, right)
+    if h0 > h1 {
+        right = _rotateRight(self, right)
+        _updateHeight(self, self._right[right])
+        _updateHeight(self, right)
+    }
+    key = _rotateLeft(self, key)
+    _updateHeight(self, self._left[key])
+    _updateHeight(self, key)
+    return key
+}
+
+fn _fixRight(self, key) {
+    left = self._left[key]
+    h0 = _leftHeight(self, left)
+    h1 = _rightHeight(self, left)
+    if h0 < h1 {
+        left = _rotateLeft(self, left)
+        _updateHeight(self, self._left[left])
+        _updateHeight(self, left)
+    }
+    key = _rotateRight(self, key)
+    _updateHeight(self, self._right[key])
+    _updateHeight(self, key)
+    return key
+}
+
+fn _reBalance(self, key) {
+    while key ~= nil {
+        h0 = _leftHeight(self, key)
+        h1 = _rightHeight(self, key)
+        diff = h0 - h1
+        height = math.max(h0, h1) + 1
+        if self._height[key] ~= height {
+            self._height[key] = height
+        } elseif diff >= -1 and diff <= 1 {
+            break
+        }
+        if diff <= -2 {
+            key = _fixLeft(self, key)
+        } elseif diff >= 2 {
+            key = _fixRight(self, key)
+        }
+        key = self._parent[key]
+    }
+}
+
+fn _linkUpdate(self, parent) {
+    self._pr = parent
+}
+
+fn _linkChild(self, sw, key) {
+    if key == nil {
+        if sw == 0 {
+            return self._pr
+        } elseif sw < 0 {
+            return self._left[self._pr]
+        } else {
+            return self._right[self._pr]
+        }
+    } else {
+        if sw == 0 {
+            self._head = key
+        } elseif sw < 0 {
+            self._left[self._pr] = key
+        } else {
+            self._right[self._pr] = key
+        }
+    }
+}
+
+-- update to with from, or clear to
+fn _keyUpdate(self, to, fr) {
+    if fr == nil {
+        self._left[to] = nil
+        self._right[to] = nil
+        self._parent[to] = nil
+        self._height[to] = nil
+        self._value[to] = nil
+    } else {
+        self._left[to] = self._left[fr]
+        self._right[to] = self._right[fr]
+        self._parent[to] = self._parent[fr]
+        self._height[to] = self._height[fr]
+    }
+}
+
+class AVL {
+
+    _count = 0
+    _head = false
+    _left = {}
+    _right = {}
+    _parent = {}
+    _height = {}
+    _value = {}
+    _fn = false
+    _pr = false
+
+    -- compare_fn(key1, key2) return -1, 0, 1 when <, =, >
+    fn init(compare_fn) {
+        guard compare_fn else {
+            return
+        }
+        self._count = 0
+        self._head = false
+        self._left = {}
+        self._right = {}
+        self._parent = {}
+        self._height = {}
+        self._value = {}
+        self._fn = compare_fn
+        self._pr = false
+    }
+
+    fn count() {
+        return self._count
+    }
+
+    -- return minimal key and value
+    fn first() {
+        if self._count <= 0 {
+            return nil
+        }
+        left = self._head
+        while self._left[left] ~= nil {
+            left = self._left[left]
+        }
+        return left, self._value[left]
+    }
+
+    -- return maximal key and value
+    fn last() {
+        if self._count <= 0 {
+            return nil
+        }
+        right = self._head
+        while self._right[right] ~= nil {
+            right = self._right[right]
+        }
+        return right, self._value[right]
+    }
+
+    -- return next key and value
+    fn next(key) {
+        if key == nil {
+            return nil
+        }
+        item = self._right[key]
+        if item ~= nil {
+            while self._left[item] ~= nil {
+                item = self._left[item]
+            }
+        } else {
+            item = key
+            while true {
+                last = item
+                item = self._parent[item]
+                if item == nil {
+                    break
+                }
+                if self._left[item] == last {
+                    break
+                }
+            }
+        }
+        if item == nil {
+            return nil
+        }
+        return item, self._value[item]
+    }
+
+    -- return prev key and value
+    fn prev(key) {
+        if key == nil {
+            return nil, nil
+        }
+        item = self._left[key]
+        if item ~= nil {
+            while self._right[item] ~= nil {
+                item = self._right[item]
+            }
+        } else {
+            item = key
+            while true {
+                last = item
+                item = self._parent[item]
+                if item == nil {
+                    break
+                }
+                if self._right[item] == last {
+                    break
+                }
+            }
+        }
+        if item == nil {
+            return nil, nil
+        }
+        return item, self._value[item]
+    }
+
+    -- find key/value
+    fn find(key) {
+        if key == nil or self._count <= 0 {
+            return nil
+        }
+        n = self._head
+        func = self._fn
+        while n {
+            hr = func(key, n)
+            if hr == 0 {
+                return n, self._value[n]
+            } elseif hr < 0 {
+                n = self._left[n]
+            } else {
+                n = self._right[n]
+            }
+        }
+        return nil
+    }
+
+    -- insert key with value, default not replace
+    fn insert(key, value, replace) {
+        if key == nil {
+            return false
+        }
+        replace = replace or false
+        parent = nil
+        sw = 0
+        func = self._fn
+        _linkUpdate(self, self._head)
+        while true {
+            parent = _linkChild(self, sw, nil)
+            if not parent {
+                break
+            }
+            _linkUpdate(self, parent)
+            sw = func(key, parent)
+            if sw == 0 {
+                if replace {
+                    self._value[key] = value
+                }
+                return true
+            } elseif not _linkChild(self, sw, nil) {
+                break
+            }
+        }
+        self._value[key] = value
+        self._parent[key] = parent
+        self._height[key] = 1
+        _linkChild(self, sw, key)
+        _reBalance(self, parent)
+        self._count = self._count + 1
+    }
+
+    -- remove key and return value
+    fn remove(key) {
+        if key == nil or self._height[key] == nil {
+            return nil
+        }
+        value = self._value[key]    
+        child = nil
+        parent = nil
+        if self._left[key] ~= nil and self._right[key] ~= nil {
+            old = key
+            key = self._right[key]
+            while true {
+                left = self._left[key]
+                if left == nil {
+                    break
+                }
+                key = left
+            }
+            child = self._right[key]
+            parent = self._parent[key]
+            if child ~= nil {
+                self._parent[child] = parent
+            }
+            _childReplace(self, key, child, parent)
+            if self._parent[key] == old {
+                parent = key
+            }
+            _keyUpdate(self, key, old)
+            _childReplace(self, old, key, self._parent[old])
+            self._parent[self._left[old]] = key
+            if self._right[old] ~= nil {
+                self._parent[self._right[old]] = key
+            }
+            _keyUpdate(self, old, nil)
+        } else {
+            if self._left[key] == nil {
+                child = self._right[key]
+            } else {
+                child = self._left[key]
+            }
+            parent = self._parent[key]
+            _childReplace(self, key, child, parent)
+            if child ~= nil {
+                self._parent[child] = parent
+            }
+            _keyUpdate(self, key, nil)
+        }
+        if parent ~= nil {
+            _reBalance(self, parent)
+        }
+        self._count = self._count - 1
+        return value
+    }
+
+    -- iterator
+    fn walk(seq) {
+        if self._count <= 0 {
+            return { in return nil }
+        }
+        if seq ~= false {
+            seq = true
+        }
+        key = nil
+        value = nil
+        if seq {
+            key, value = self:first()
+        } else {
+            key, value = self:last()
+        }
+        return fn() {
+            if key ~= nil {
+                rkey = key
+                rvalue = value
+                if seq {
+                    key, value = self:next(key)
+                } else {
+                    key, value = self:prev(key)
+                }
+                return rkey, rvalue
+            } else {
+                return nil
+            }
+        }
+    }
+
+    -- index range, as (2, 3) or (9, 7)
+    fn range(fr, to) {
+        fr = fr or 1
+        to = to or self._count
+        if self._count <= 0 or math.min(fr, to) < 1 or math.max(fr, to) > self._count {
+            return {}
+        }
+        range = {}
+        step = (fr < to) and 1 or -1
+        idx = (step > 0) and 1 or self._count
+        key = nil
+        if step > 0 {
+            key = self:first()
+        } else {
+            key = self:last()
+        }
+        if fr > to {
+            fr, to = to, fr
+        }
+        repeat {
+            if idx >= fr and idx <= to {
+                range[#range + 1] = key
+            }
+            idx = idx + step
+            if step > 0 {
+                if idx > to {
+                    break
+                }
+                key = self:next(key)
+            } else {
+                if idx < fr {
+                    break
+                }
+                key = self:prev(key)
+            }
+        } until key == nil
+        return range
+    }
+
+    -- clear
+    fn clear() {
+        if self._count <= 0 {
+            return
+        }
+        self._count = 0
+        self._head = false
+        self._left = {}
+        self._right = {}
+        self._parent = {}
+        self._height = {}
+        self._value = {}
+    }
+
+    -- get key height
+    fn height(key) {
+        if key == nil or self._count <= 0 {
+            return -1
+        }
+        return self._height[key] or -1
+    }
+}
+
+return AVL

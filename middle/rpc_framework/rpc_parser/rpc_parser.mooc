@@ -1,0 +1,66 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import TcpRaw from "rpc_framework.rpc_parser.tcp_raw"
+import HttpJson from "rpc_framework.rpc_parser.http_json"
+import LuaSproto from "rpc_framework.rpc_parser.lua_sproto"
+import LuaResp from "rpc_framework.rpc_parser.lua_resp"
+Log = require("middle.logger")("[RPC]", "debug")
+
+All_Parsers = {
+    AppEnv.Prototols.TCP_RAW : TcpRaw,
+    AppEnv.Prototols.HTTP_JSON : HttpJson,
+    AppEnv.Prototols.LUA_SPROTO : LuaSproto,
+    AppEnv.Prototols.LUA_RESP : LuaResp,
+}
+
+struct RpcParser {
+    -- parse HTTP headers and data
+    _parser = false
+
+    static fn newRequest(rpc_info) {
+        parser = All_Parsers[rpc_info.proto]
+        if parser {
+            self = Self()
+            self._parser = parser.newRequest(rpc_info)
+            return self
+        } else {
+            Log:error("failed to find parser %s", rpc_info.proto)
+        }
+    }
+
+    static fn newResponse(rpc_info) {
+        parser = All_Parsers[rpc_info.proto]
+        if parser {
+            self = Self()
+            self._parser = parser.newResponse(rpc_info)
+            return self
+        } else {
+            Log:error("failed to find parser %s", rpc_info.proto)
+        }
+    }
+
+    -- return ret_value, proto_info, data_table
+    -- ret_value < 0 means error
+    -- proto_info would be something like http_header_table
+    fn process(data) {
+        if not self._parser or not data {
+            Log:error("rpc_parser process invalid param")
+            return -1
+        }
+        return self._parser:process(data)
+    }
+
+    fn destroy() {
+        if self._parser {
+            self._parser:destroy()
+            self._parser = false
+        }
+    }
+}
+
+return RpcParser

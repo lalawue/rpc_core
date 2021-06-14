@@ -7,7 +7,7 @@
 
 local AppFramework = require("middle.app_framework")
 local RpcFramework = require("middle.rpc_framework")
-local Log = require("middle.logger").newLogger("[AgentRedis]", "info")
+local Log = require("middle.logger")("[AgentRedis]", "info")
 
 local App = Class("AgentRedis", AppFramework)
 

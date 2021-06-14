@@ -1,0 +1,174 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+--
+-- channel read/write with SSL/TLS base on mnet tcp
+--
+-- document: https://zhaozg.github.io/lua-openssl/modules/ssl.html#ctx_new
+--
+
+import NetCore from "base.ffi_mnet"
+ret, OpenSSL = pcall(require, "openssl") -- consider not exist openssl library
+Log = require("middle.logger")("[TcpSSL]", "error")
+
+if ret {
+    OpenSSL = OpenSSL.ssl
+} else {
+    -- OpenSSL module not ready    
+    return false
+}
+
+struct ChannSSL {
+
+    _options = false -- not use now
+    _chann = false -- mnet chann
+    _ctx = false -- OpenSSL ctx
+    _callback = false
+    
+    _ssl = false -- OpenSSL SSL handle
+    _ssl_connected = false -- SSL connected state
+    _rfifo = false -- read fifo
+    _wfifo = "" -- write fifo
+
+    -- only support client now
+    fn init(options) {
+        if type(options) == "table" and options.protocol == "server" {
+            Log:error("invalid option, not supported now")
+        } else {
+            self._options = options
+            self._ctx = OpenSSL.ctx_new("TLS") -- use ‘TLS’ to negotiate highest available SSL/TLS version
+            self._chann = NetCore.openChann("tcp")
+        }
+    }
+
+    fn closeChann() {
+        if self._chann {
+            self._chann:close()
+            self._chann = false
+        }
+        if self._ssl {
+            self._ssl:shutdown()
+            self._ssl = false
+        }
+        if self._ctx {
+            self._ctx = false
+        }
+        self._options = false
+        self._ssl_connected = false
+        self._rfifo = false
+        self._wfifo = ""
+    }
+
+    -- for client
+    fn connectAddr(ipv4, port) {
+        if self._chann and self._chann:state() ~= "state_connected" {
+            self._chann:connect(ipv4, port)
+            return true
+        } else {
+            Log:error("failed to connect '%s:%d', %s", ipv4, port, self._chann)
+            return false
+        }
+    }
+
+    -- callback params should be (self, event_name, accept_chann, c_msg)
+    fn setCallback(callback) {
+        if not callback {
+            Log:error("invalid callback param")
+            return
+        }
+        self._callback = callback
+        self._chann:setCallback({ chann, event_name, accept_chann, c_msg in
+            switch event_name {
+            case "event_connected":
+                -- 'event_connected' callback in self:onLoopEvent()
+                fd = chann:channFd()
+                self._ssl = self._ctx:ssl(fd)
+                self._ssl:set_connect_state()
+            case "event_recv":
+                data, reason = self._ssl:read()
+                if data {
+                    self._rfifo = data
+                    self._callback(self, event_name, accept_chann, c_msg)
+                }
+            case "event_send":
+                self._callback(self, event_name, accept_chann, c_msg)
+            case "event_disconnect":
+                self._callback(self, event_name, accept_chann, c_msg)
+            case "event_timer":
+                self._callback(self, event_name, accept_chann, c_msg)
+            case "event_accept":
+            -- not supported 'server_protocol'
+            }
+        })
+    }
+
+    fn send(data) {
+        if not self._ssl_connected or type(data) ~= "string" {
+            Log:error("failed to send for ssl not connected")
+            return false
+        }
+        self._wfifo = self._wfifo .. data
+        len = self._wfifo:len()
+        number, reason = self._ssl:write(self._wfifo)
+        if number >= len {
+            self._wfifo = ""
+        } else {
+            self._wfifo = self._wfifo:sub(math.max(number, 0) + 1)
+        }
+        return true
+    }
+
+    fn recv() {
+        if not self._ssl_connected {
+            return nil
+        }
+        if self._rfifo {
+            data = self._rfifo
+            self._rfifo = false
+            return data
+        }
+    }
+
+    -- SSL handshake
+    fn handshake() {
+        if not self._ssl {
+            return false
+        }
+        ret, reason = self._ssl:handshake()
+        if not ret {
+            if reason == "want_read" {
+                -- disable send buffer empty event was enough
+                self._chann:activeEvent("event_send", false)
+            } elseif reason == "want_write" {
+                self._chann:activeEvent("event_send", true)
+            }
+            return false
+        }
+        return true
+    }
+
+    fn setEventTimer(timeout_second) {
+        if self._chann {
+            self._chann:activeEvent("event_timer", timeout_second * 1000000)
+        }
+    }
+
+    fn onLoopEvent() {
+        if not self._ssl_connected {
+            self._ssl_connected = self:handshake()
+            if self._ssl_connected {
+                self._callback(self, "event_connected", nil, nil)
+                -- remove on loop event
+                return true
+            }
+        }
+        -- keep event        
+        return false
+    }
+}
+
+return ChannSSL

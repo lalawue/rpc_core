@@ -1,0 +1,186 @@
+--
+-- Copyright (c) 2019 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import FFI from "ffi"
+
+FFI.cdef([[
+typedef enum {
+   PROCESS_STATE_INVALID = 0,
+   PROCESS_STATE_BEGIN = 1,     /* begin message */
+   PROCESS_STATE_HEAD = 2,      /* header data comlete */
+   PROCESS_STATE_BODY = 3,      /* begin body data */
+   PROCESS_STATE_FINISH = 4     /* message finished */
+} process_state_t;
+
+typedef struct s_head_kv {
+   char *head_field;
+   char *head_value;
+   struct s_head_kv *next;
+} head_kv_t;
+
+typedef struct s_data {
+   unsigned char data[8192];
+   int data_pos;
+   struct s_data *next;
+} data_t;
+
+typedef struct s_http {
+   process_state_t process_state; /*  */
+   const char *method;
+   char url[8192];
+   uint16_t status_code;
+   head_kv_t *head_kv;
+   data_t *content;
+   unsigned int content_length;
+   unsigned int readed_length;
+   const char *err_msg;
+   void *opaque;                /* reserved */
+} http_t;
+
+/* 0:request 1:response 2:both */
+http_t* mhttp_parser_create(int parser_type);
+void mhttp_parser_destroy(http_t *h);
+
+/* return byte processed, -1 means error */
+int mhttp_parser_process(http_t *h, char *data, int length);
+
+/* in BODY process_state, you can consume data blocks, 
+ * minimize the memory usage, and last block may be a 
+ * partial one
+ */
+void mhttp_parser_consume_data(http_t *h, int count);
+
+/* reset http parser */
+void mhttp_parser_reset(http_t *h);
+]])
+
+HP = FFI.load("hyperparser")
+
+local k_url_len = 8192
+local _intvalue = FFI.new("int", 0)
+local _buf = FFI.new("char[?]", k_url_len)
+
+fn _unpack_http(_hp, htbl) {
+    method = FFI.string(_hp.method)
+    if not method:find("<") {
+        htbl.method = method
+    }
+    status_code = tonumber(_hp.status_code)
+    if status_code > 0 and status_code < 65535 {
+        htbl.status_code = status_code
+    }
+    content_length = tonumber(_hp.content_length)
+    if content_length > 0 {
+        htbl.content_length = content_length
+    }
+    htbl.readed_length = tonumber(_hp.readed_length)
+    url = FFI.string(_hp.url)
+    if url:len() > 0 {
+        htbl.url = url
+    }
+    if _hp.head_kv ~= nil and htbl.header == nil {
+        htbl.header = {}
+        kv = _hp.head_kv
+        while kv ~= nil {
+            field = kv.head_field
+            value = kv.head_value ~= nil and FFI.string(kv.head_value) or ""
+            if field ~= nil {
+                htbl.header[FFI.string(field)] = value
+            } else {
+                htbl.header[#htbl.header + 1] = value
+            }
+            kv = kv.next
+        }
+    }
+    if _hp.content ~= nil {
+        htbl.contents = htbl.contents or {}
+        data_count = 0
+        c = _hp.content
+        while c ~= nil {
+            data_count = data_count + 1
+            htbl.contents[#htbl.contents + 1] = FFI.string(c.data, c.data_pos)
+            c = c.next
+       }
+        HP.mhttp_parser_consume_data(_hp, data_count) -- consume data count from parser
+    }
+    if _hp.err_msg ~= nil {
+        htbl.err_msg = FFI.string(_hp.err_msg)
+    }
+    return htbl
+}
+
+struct Parser {
+    STATE_HEAD_FINISH = 2   -- head infomation ready
+    STATE_BODY_CONTINUE = 3 -- body infomation on going, chunked exp.
+    STATE_BODY_FINISH = 4   -- body infomation ready
+
+    _hp = false
+    _state = -1
+    _htbl = {}
+    _data = ""
+
+    fn init(parserType) {
+        if parserType == "REQUEST" {
+            _intvalue = 0
+        } elseif parserType == "RESPONSE" {
+            _intvalue = 1
+        } else {
+            _intvalue = 2 -- both
+        }
+        self._hp = HP.mhttp_parser_create(_intvalue)
+        self._state = -1
+        self._htbl = {}
+        self._data = ""
+    }
+
+    fn destroy() {
+        if self._hp {
+            HP.mhttp_parser_destroy(self._hp)
+            self._hp = nil
+            self._state = -1
+            self._htbl = nil
+        }
+    }
+
+    -- process input data, and holding left, only input new data
+    -- return nread, state, http_info_table
+    fn process(data) {
+        assert(type(data) == "string", "invalid data type")
+        nread = 0
+        state = nil
+        data = self._data .. data
+        repeat {
+            _intvalue = data:len() < k_url_len and data:len() or k_url_len
+            FFI.copy(_buf, data, _intvalue)
+            nread = tonumber(HP.mhttp_parser_process(self._hp, _buf, _intvalue))
+            state = tonumber(self._hp.process_state)
+            if self._state ~= state {
+                if state == HP.PROCESS_STATE_HEAD {
+                    self._htbl = _unpack_http(self._hp, self._htbl)
+                } elseif state == HP.PROCESS_STATE_BODY {
+                    self._htbl = _unpack_http(self._hp, self._htbl)
+                } elseif state == HP.PROCESS_STATE_FINISH {
+                    self._htbl = _unpack_http(self._hp, self._htbl)
+                    HP.mhttp_parser_reset(self._hp) -- reset when finish
+                }
+                self._state = state
+            }
+            data = data:len() > nread and data:sub(nread + 1) or ""
+        } until nread <= 0 or data:len() <= 0
+        self._data = data
+        return nread, self._state, self._htbl
+    }
+
+    -- reset parser, ready for next parse
+    fn reset() {
+        self._state = -1
+        self._htbl = {}
+        self._data = ""
+    }
+}
+
+return Parser

@@ -1,0 +1,60 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import Resp from "resp"
+Log = require("middle.logger")("[Redis]", "error")
+
+local _proto_info = {}
+
+struct Parser {
+    _info = false
+    _data = ""
+
+    static fn newRequest(rpc_info) {
+        parser = Self()
+        parser._info = rpc_info
+        return parser
+    }
+
+    static fn newResponse(rpc_info) {
+        parser = Self()
+        parser._info = rpc_info
+        return parser
+    }
+
+    -- return ret_value, proto_info, data_table
+    -- the proto_info would be empty_table
+    fn process(data) {
+        if type(data) ~= "string" {
+            Log:error("Invalid process data")
+            return -1
+        }
+        self._data = self._data .. data
+        if self._data:len() <= 0 {
+            Log:error("Empty data")
+            return 0
+        }
+        consumed, output, typ = Resp.decode(self._data)
+        if consumed == self._data:len() {
+            self._data = ""
+            return 1, _proto_info, output
+        } elseif consumed == Resp.EILSEQ {
+            -- Found illegal byte sequence
+            Log:error("Found illegal byte sequence ")
+            return -1
+        }
+        -- Not enough data available.
+        --Log:error("Not enough data")
+        return 0
+    }
+
+    fn destroy() {
+        self._data = ""
+    }
+}
+
+return Parser

@@ -1,0 +1,50 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import Bit from "bit"
+
+Parser = AppEnv.Store[AppEnv.Prototols.LUA_SPROTO]
+
+struct Dial {
+    _info = false
+    _data = false -- support only one arg
+    _func = false
+
+    -- set arg only once
+    static fn newRequest(rpc_info, rpc_opt, rpc_args, rpc_body) {
+        if rpc_info {
+            self = Self()
+            self._info = rpc_info
+            self._data = rpc_args or rpc_body
+            self._func = Parser.request_encode
+            assert(self._func ~= nil, "Invalid encode function")
+            return self
+        }
+    }
+
+    static fn newResponse(rpc_info, rpc_opt, rpc_body) {
+        if rpc_info {
+            self = Self()
+            self._info = rpc_info
+            self._data = rpc_body
+            self._func = Parser.response_encode
+            return self
+        }
+    }
+
+    fn makePackage(_, _) {
+        if self._func and self._data {
+            -- protoname as service_info.name
+            data = self._func(Parser, self._info.name, self._data)
+            len = data:len()
+            -- 2 byte ahead for length
+            return string.char(Bit.rshift(len, 8)) .. string.char(Bit.band(len, 0xff)) .. data
+        }
+    }
+}
+
+return Dial
