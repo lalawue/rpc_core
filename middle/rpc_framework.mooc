@@ -117,10 +117,10 @@ struct Framework {
     -- return 'true/false, return_object, reuse_info'
     --[[
         option_args as {
-            timeout = seconds,
-            ipv4 = service_ipv4,
-            keep_alive = keep_tcp_connection,
-            reuse_info = connection_info modified by framework
+            timeout : seconds,
+            ipv4 : service_ipv4,
+            keep_alive : keep_tcp_connection,
+            reuse_info : connection_info modified by framework
         }
     ]]
     static fn newRequest(service_info, option_args, path_args, body_args) {
@@ -150,7 +150,7 @@ struct Framework {
                 ret_object = nil
                 if event_name == "event_connected" {
                     Log:trace("'%s' connected: %s", service_info.name, chann)
-                    local request = RpcDial()
+                    request = RpcDial()
                     request:callMethod(service_info, nil, path_args, body_args)
                     chann:send(request:makePackage())
                 } elseif event_name == "event_recv" {

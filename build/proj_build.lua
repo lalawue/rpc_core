@@ -33,7 +33,7 @@ local Build = {
             self.CC = jit.os == "BSD" and "cc" or "gcc"
         end
         if not self.CFLAGS or self.CFLAGS:len() <= 0 then
-            self.CFLAGS = jit.os == "Darwin" and "-O3 -bundle -undefined dynamic_lookup" or "-O3 -shared -fPIC"
+            self.CFLAGS = jit.os == "Darwin" and "-O3 -bundle -undefined dynamic_lookup" or "-O3 -shared -fPIC -std=c99"
         end
         if not self.MAKE or self.MAKE:len() <= 0 then
             self.MAKE = jit.os == "BSD" and "gmake" or "make"

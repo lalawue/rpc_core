@@ -98,10 +98,10 @@ struct Browser {
 
     --[[
         request HTTP/HTTPS URL
-        option = {
-            inflate = false, -- default
-            header = header, -- table
-            recv_cb = function(header_tbl, data_string) end, -- for receiving data
+        option as {
+            inflate : false, -- default
+            header : header, -- table
+            recv_cb : fn(header_tbl, data_string) {}, -- for receiving data
         }
         return header_tbl, data_string (if no recv_cb function set)
     ]]
