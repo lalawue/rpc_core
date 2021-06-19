@@ -1,0 +1,230 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import ffi from "ffi"
+
+ffi.cdef([[
+/* -- Build query content
+ * buf: buffer for store DNS query packet content, must have size == 1024 bytes
+ * qid: DNS query id, make sure > 0
+ * domain: '0' terminated string
+ * --
+ * return: 0 for error, or valid query_size > 0
+ */
+ int mdns_query_build(uint8_t *buf, unsigned short qid, const char *domain);
+
+ /* -- fetch query id for later input query_size
+  * buf: response buffer, must have size == 1024 byte
+  * content_len: valid content length
+  * --
+  * return: 0 for error, or qid from response
+  */
+ int mdns_response_fetch_qid(const uint8_t *buf, int content_len);
+ 
+ /* -- 
+  * buf: response buffer, must have size == 1024 byte
+  * content_len: valid content length
+  * query_size: query_size for qid fetched before
+  * domain: '0' terminated string for compare
+  * out_ipv4: 4 byte buffer for output ipv4
+  * --
+  * return: 0 for error, 1 for ok
+  */
+ int mdns_response_parse(uint8_t *buf,
+                         int content_len,
+                         int query_size,
+                         const char *domain,
+                         uint8_t *out_ipv4);
+]])
+
+DnsCore = ffi.load("mdns_utils")
+import NetCore from "base.ffi_mnet"
+import UrlCore from "middle.url"
+import AvlTree from "middle.avl"
+import AppFramework from "middle.app_framework"
+Log = require("middle.logger")("[DNS]", "debug")
+export AppEnv
+
+_copy = ffi.copy
+_fill = ffi.fill
+_string = ffi.string
+
+_buf = ffi.new("uint8_t[?]", 1024)
+_domain = ffi.new("uint8_t[?]", 256)
+_out_ipv4 = ffi.new("uint8_t[?]", 4)
+
+class DNS : AppFramework {
+
+    _app_timeout = 0
+    _svr_tbl = false
+    _qid_avl = false
+    _domain_tbl = false
+    _wait_tbl = false
+
+    fn init(app_name) {
+        -- 0.1 second
+        self._app_timeout = 0.1
+        self._svr_tbl = {}
+        -- wait processing list as { qid, domain, query_size }
+        self._qid_avl = AvlTree({ a, b in
+            return a.qid - b.qid
+        })
+        -- result table domain to ipv4 string
+        self._domain_tbl = {}
+        -- wait response list
+        self._wait_tbl = {}
+        math.randomseed(os.time())
+    }
+
+    fn loadBusiness(rpc_framework) {
+        -- init udp for query DNS
+        self:_initUdpQueryChanns()
+
+        -- init JSON service RPC
+        rpc_framework.newService(AppEnv.Service.DNS_JSON, { a, b, c in
+            return self:_httpJsonServiceHandler(a, b, c)
+        })
+
+        -- init Sproto service RPC
+        rpc_framework.newService(AppEnv.Service.DNS_SPROTO, { a, b, c in
+            return self:_sprotoServiceHandler(a, b, c)
+        })
+    }
+
+    fn startBusiness(rpc_framework) {
+        -- no coroutine code here
+    }
+
+    -- MARK: Internal
+
+    -- UDP DNS Query
+    fn _initUdpQueryChanns() {
+        dns_ipv4 = {
+            "114.114.114.114",
+            "8.8.8.8",
+            "8.8.8.4"
+        }
+        for i = 1, #dns_ipv4, 1 {
+            udp_chann = NetCore.openChann("udp")
+            udp_chann:setCallback({ chann, event_name, _, _ in
+                if event_name == "event_recv" {
+                    self:_processResponse(chann:recv())
+                }
+            })
+            udp_chann:connect(dns_ipv4[i], 53)
+            self._svr_tbl[#self._svr_tbl + 1] = udp_chann
+        }
+    }
+
+    -- SPROTO service interface
+    fn _sprotoServiceHandler(proto_info, reqeust_object, rpc_response) {
+        if proto_info and proto_info.name == AppEnv.Service.DNS_SPROTO.name and type(reqeust_object.domain) == "string" {
+            self:_processRequest(reqeust_object.domain, rpc_response)
+            return true
+        } else {
+            Log:error("invalid sproto name %s", proto_info.name)
+            return false
+        }
+    }
+
+    -- HTTP JSON service interface
+    fn _httpJsonServiceHandler(proto_info, reqeust_object, rpc_response) {
+        url = UrlCore.parse(proto_info.url)
+        if tostring(url.query):len() > 0 {
+            for _, domain in pairs(url.query) {
+                -- use whaterver key
+                self:_processRequest(domain, rpc_response)
+                break
+            }
+        } elseif reqeust_object.domain {
+            -- query with json
+            self:_processRequest(reqeust_object.domain, rpc_response)
+        } else {
+            Log:error("invalid path or request_object !")
+            return false
+        }
+        return true
+    }
+
+    fn _processRequest(domain, rpc_response) {
+        if type(domain) ~= "string" {
+            return
+        }
+        ipv4 = self._domain_tbl[domain]
+        if ipv4 {
+            rpc_response:sendResponse({ipv4 : ipv4})
+        } else {
+            -- build UDP package
+            qid = math.random(65535)
+            _fill(_domain, 256)
+            _copy(_domain, domain)
+            query_size = DnsCore.mdns_query_build(_buf, qid, _domain)
+            if query_size <= 0 {
+                rpc_response:sendResponse({})
+                return
+            }
+            item = { :qid, :domain, :query_size}
+            self._qid_avl:insert(item)
+            data = _string(_buf, query_size)
+            for _, chann in ipairs(self._svr_tbl) {
+                chann:send(data)
+            }
+            -- add response to wait list
+            if not self._wait_tbl[domain] {
+                self._wait_tbl[domain] = {}
+            }
+            tbl = self._wait_tbl[domain]
+            tbl[#tbl + 1] = rpc_response
+        }
+    }
+
+    fn _processResponse(pkg_data) {
+        if pkg_data == nil {
+            return
+        }
+        -- check response
+        _copy(_buf, pkg_data, pkg_data:len())
+        qid = DnsCore.mdns_response_fetch_qid(_buf, pkg_data:len())
+        item = self._qid_avl:find({:qid})
+        if not item {
+            return
+        }
+        _fill(_domain, 256)
+        _copy(_domain, item.domain)
+        ret = DnsCore.mdns_response_parse(_buf, pkg_data:len(), item.query_size, _domain, _out_ipv4)
+        if ret <= 0 {
+            Log:error(
+                "failed parse item with ret:%d, qid:%d, query_size:%d, domain:%s",
+                ret,
+                qid,
+                item.query_size,
+                item.domain
+            )
+            self:_rpcResponse(item.domain, {})
+            return
+        }
+        out = _string(_out_ipv4, 4)
+        ipv4 = string.format("%d.%d.%d.%d", out:byte(1), out:byte(2), out:byte(3), out:byte(4))
+        self._domain_tbl[item.domain] = ipv4
+        -- process wait response
+        self:_rpcResponse(item.domain, {:ipv4})
+        -- remove from wait processing list
+        self._qid_avl:remove(item)
+    }
+
+    fn _rpcResponse(domain, data) {
+        tbl = self._wait_tbl[domain]
+        if tbl {
+            for _, rpc_response in ipairs(tbl) {
+                rpc_response:sendResponse(data)
+            }
+            self._wait_tbl[domain] = nil
+        }
+    }
+}
+
+return DNS
