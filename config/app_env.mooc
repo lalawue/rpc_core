@@ -81,7 +81,7 @@ struct AppEnv {
         OBJDB_RESP : {
             name : "objdb",
             proto : AppEnv.Prototols.LUA_RESP,
-            ipv4 : AppEnv.Config.HOST_IPV4,
+            ipv4 : AppEnv.Config.LOOP_IPV4,
             port : 10060
         }
     }

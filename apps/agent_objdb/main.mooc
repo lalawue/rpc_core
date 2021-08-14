@@ -1,0 +1,181 @@
+--
+-- Copyright (c) 2020 lalawue
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
+
+import NetCore from "base.ffi_mnet"
+import FileManager from "middle.file_manager"
+import AppFramework from "middle.app_framework"
+import Sha from "middle.sha2"
+Log = require("middle.logger")("[ObjdbCnt]", "info")
+export AppENV
+
+local _option = {}
+local _protocol = AppEnv.Service.OBJDB_RESP   
+
+class ObjCnt : AppFramework {
+
+     fn init(app_name, ipv4) {
+        ipv4 = ipv4 or AppEnv.Service.OBJDB_RESP.ipv4
+        Log:info("Using address: %s", ipv4)
+        self._ipv4 = ipv4
+        self._app_timeout = 50 -- decrease app time out
+        size = 524288 -- 512kb
+        NetCore.setBufSize(size, size)
+    }
+
+    fn startBusiness(rpc_framework) {
+        while true {
+            io.write(string.format("%s> ", self._ipv4))
+            tbl = self:split(io.read())
+            if not tbl or #tbl < 2 {
+                Log:error("invalid command")
+            } else {
+                cmd = tbl[1]:upper()
+                switch cmd {
+                case "SET":
+                    self:_cmdSet(rpc_framework, tbl[2], tbl[3])
+                case "SETF":
+                    self:_cmdSetFile(rpc_framework, tbl[2], tbl[3])
+                case "GET":
+                    self:_cmdGet(rpc_framework, tbl[2])
+                case "DEL":
+                    self:_cmdDel(rpc_framework, tbl[2])
+                case "KEYS":
+                    self:_cmdKeys(rpc_framework, tbl[2])
+                case "HELP":
+                    self:_cmdHelp(rpc_framework)
+                }
+            }
+        }
+    }
+
+    fn _cmdSet(rpc_framework, key, value) {
+        if type(key) ~= "string" or type(value) ~= "string" or key:len() <= 0 or value:len() <= 0 {
+            Log:error("Usage: SET KEY VALUE")
+        } else {
+            _option.ipv4 = self._ipv4
+            _option.keep_alive = true
+            status, ret = rpc_framework.newRequest(_protocol, _option, {"SET", key, value})
+            if status {
+                self:printstr(ret)
+            } else {
+                Log:error("invalid framework state")
+            }
+        }
+    }
+
+    fn _cmdSetFile(rpc_framework, key, fpath) {
+        if type(key) ~= "string" or type(fpath) ~= "string" or key:len() <= 0 or fpath:len() <= 0 {
+            Log:error("Usage: SET KEY VALUE")
+        } else {
+            content = FileManager.readFile(fpath)
+            if content {
+                _option.ipv4 = self._ipv4
+                _option.keep_alive = true
+                status, ret = rpc_framework.newRequest(_protocol, _option, {"SET", key, content})
+                if status {
+                    self:printstr(ret)
+                } else {
+                    Log:error("invalid framework state")
+                }
+            } else {
+                Log:error("failed to read file: %s", fpath)
+            }
+        }
+    }
+
+    fn _cmdGet(rpc_framework, key) {
+        if type(key) ~= "string" or key:len() <= 0 {
+            Log:error("Usage: GET KEY")
+        } else {
+            _option.ipv4 = self._ipv4
+            _option.keep_alive = true
+            status, ret = rpc_framework.newRequest(_protocol, _option, {"GET", key})
+            if status {
+                self:printstr(ret)
+            } else {
+                Log:error("invalid framework state")
+            }
+        }
+    }
+
+    fn _cmdDel(rpc_framework, key) {
+        if type(key) ~= "string" or key:len() <= 0 {
+            Log:error("Usage: GET KEY")
+        } else {
+            _option.ipv4 = self._ipv4
+            _option.keep_alive = true
+            status, ret = rpc_framework.newRequest(_protocol, _option, {"DEL", key})
+            if status and type(ret) == "number" {
+                print(string.format("(Integer) %d", ret))
+            } else {
+                Log:error("invalid framework state")
+            }
+        }
+    }
+
+    fn _cmdKeys(rpc_framework, pattern) {
+        if type(pattern) ~= "string" or pattern:len() <= 0 {
+            Log:error("Usage: KEYS PATTERN")
+        } else {
+            _option.ipv4 = self._ipv4
+            _option.keep_alive = true
+            status, ret = rpc_framework.newRequest(_protocol, _option, {"KEYS", pattern})
+            if status and type(ret) == "table" {
+                if #ret <= 0 {
+                    print("(empty list or set)")
+                } else {
+                    for i, v in ipairs(ret) {
+                        print(string.format('%d) "%s"', i, v))
+                    }
+                }
+            } else {
+                Log:error("invalid framework state")
+            }
+        }
+    }
+
+    fn split(str) {
+        tbl = {}
+        s, e = str:find("[^%s]*")
+        guard s else {
+            return nil
+        }
+        tbl[1] = str:sub(s, e)
+        s, e = str:find("%s*", e+1)
+        guard s else {
+            return nil
+        }
+        s, e = str:find("[^%s]*", e+1)
+        guard s else {
+            return nil
+        }
+        tbl[2] = str:sub(s, e)
+        s, e = str:find("%s*", e+1)
+        if s and e and e < str:len() {
+            tbl[3] = str:sub(e+1)
+        }
+        table.dump(tbl)
+        return tbl
+    }
+
+    fn printstr(str) {
+        if str == nil {
+            print("nil")
+        } else {
+            print('"' .. str .. '"')
+        }
+    }
+
+    fn _cmdHelp() {
+        tbl = {"SET KEY VAL", "GET KEY", "DEL KEY", "KEYS PATTERN", "SETF KEY FILE_PATH"}
+        for _, v in ipairs(tbl) {
+            print(v)
+        }
+    }
+}
+
+return ObjCnt
