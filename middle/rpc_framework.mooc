@@ -94,7 +94,7 @@ struct Framework {
                             to_close = true
                         } elseif proto_info {
                             rpc_response = RpcResponse(chann, service_info)
-                            to_close = not service_handler(proto_info, request_object, rpc_response)
+                            to_close = false == service_handler(proto_info, request_object, rpc_response)
                         }
                     } else {
                         to_close = true
