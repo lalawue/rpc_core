@@ -38,8 +38,9 @@ fn string.split(self, sSeparator, nMax, bRegexp) {
 -- table
 --
 
-fn table.dump(tbl) {
-    io.write(serpent.block(tbl) .. "\n")
+fn table.dump(tbl, opts) {
+    opts = opts or {}
+    io.write(serpent.block(tbl, opts) .. "\n")
 }
 
 -- return a readonly table

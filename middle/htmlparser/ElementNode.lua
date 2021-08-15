@@ -129,17 +129,6 @@ function ElementNode:getcontent()
 	return string.sub(self.root._text, self._openend + 1, self._closestart - 1)
 end
 
-function ElementNode:getescapecontent(...)
-	local n = self
-	local i = 1
-	while #n.nodes > 0 do
-		local a = select(i, ...)
-		n = n.nodes[tonumber(a) or 1]
-		i = i + 1
-    end
-    return n:getcontent()
-end
-
 function ElementNode:addattribute(k, v)
 	self.attributes[k] = v
 	if string.lower(k) == "id" then
