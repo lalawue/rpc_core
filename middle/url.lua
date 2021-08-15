@@ -448,4 +448,8 @@ function M:normalize()
 	return self
 end
 
+function M.encodeURL(url)
+	return encode(url)
+end
+
 return M

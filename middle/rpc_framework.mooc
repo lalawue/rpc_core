@@ -62,6 +62,8 @@ local fn _closeChannAndParser(service_info, chann, rpc_parser, keep_alive) {
 
 struct Framework {
 
+    dummy_option = {}
+
     static fn initFramework() {
         NetCore.init()
     }
@@ -135,6 +137,7 @@ struct Framework {
         }
 
         -- reuse chann or create new one, assume service_info are the same
+        option_args = option_args or Self.dummy_option
         chann = option_args and option_args.reuse_info or NetCore.openChann("tcp")
 
         if chann:state() == "state_connected" {
@@ -172,7 +175,7 @@ struct Framework {
                 }
             }
             chann:setCallback(callback)
-            --Log:debug("try connect %s", option_args.ipv4 or service_info.ipv4)
+            Log:debug("try connect %s:%d", option_args.ipv4 or service_info.ipv4, service_info.port)
             chann:connect(option_args.ipv4 or service_info.ipv4, service_info.port)
             chann:activeEvent("event_timer", tonumber(option_args.timeout or AppEnv.Config.RPC_TIMEOUT) * 1000000)
         }
