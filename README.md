@@ -243,6 +243,7 @@ Thanks people provide libraries below:
 - [slembcke/debugger.lua](https://github.com/slembcke/debugger.lua), A simple, embedabble CLI debugger for Lua
 - [ColonelThirtyTwo/lsqlite3-ffi](https://github.com/ColonelThirtyTwo/lsqlite3-ffi), Lua SQLite using LuaJIT's FFI library
 - [cloudwu/lua-serialize](https://github.com/cloudwu/lua-serialize), Serialize lua objects into a binary block
+- [TiagoDanin/htmlEntities-for-lua](https://github.com/TiagoDanin/htmlEntities-for-lua)
 - [m_net](https://github.com/lalawue/m_net)
 - [m_dnsutils](https://github.com/lalawue/m_dnsutils)
 - [ffi_bitcask.lua](https://github.com/lalawue/ffi_bitcask.lua)
