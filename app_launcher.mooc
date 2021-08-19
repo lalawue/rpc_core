@@ -61,7 +61,7 @@ if type(AppEnv.Config.APP_DIR) == "string" and string.len(AppEnv.Config.APP_DIR)
 }
 
 -- list apps if no app_name provide
-if type(app_name) ~= "string" {
+if app_name == nil {
     lfs = require("base.ffi_lfs")
     print("supported apps:")
     _listApps = { path in
@@ -77,9 +77,9 @@ if type(app_name) ~= "string" {
     }
     _listApps(apps_dir)
     os.exit(0)
-} else {
-    package.path = package.path .. string.format(";%s/%s/?.lua", apps_dir, app_name)
 }
+
+package.path = package.path .. string.format(";%s/%s/?.lua", apps_dir, app_name)
 
 -- setup TMP_DIR, DATA_DIR
 if jit.os == "Windows" {

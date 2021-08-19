@@ -22,15 +22,22 @@ print_var()
     echo "$1LUAJIT_INC_DIR=$LUAJIT_INC_DIR"
     echo "$1LUAJIT_LIB_DIR=$LUAJIT_LIB_DIR"
     echo "$1LUAJIT_LIB_NAME=$LUAJIT_LIB_NAME"
-    echo "$1PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
 }
 
-if [ ! "$LUAJIT_INC_DIR" ] || [ ! "$LUAJIT_LIB_DIR" ] || [ ! "$LUAJIT_LIB_NAME" ] || [ ! "$PKG_CONFIG_PATH" ]; then
+if [ ! "$LUAJIT_INC_DIR" ] || [ ! "$LUAJIT_LIB_DIR" ] || [ ! "$LUAJIT_LIB_NAME" ]; then
     echo "First export variable below:"
     print_var "export "
-    echo "try install openssl 1.1.1_ from apt-get or brew install"
     exit 0
 fi
+
+BIN_DIR=../binaries/bin/
+BIN_FILE=moocscript
+
+echo "Install local moocscript"
+mkdir -p $BIN_DIR
+echo "#!$(which luajit)" > $BIN_DIR/$BIN_FILE
+cat moocscript/$BIN_FILE >> $BIN_DIR/$BIN_FILE
+chmod +x $BIN_DIR/$BIN_FILE
 
 if [ "$(basename $PWD)" = "build" ]; then
     export MACOSX_DEPLOYMENT_TARGET=10.14

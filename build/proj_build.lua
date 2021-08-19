@@ -25,7 +25,6 @@ local Build = {
     INCPTH = os.getenv("LUAJIT_INC_DIR") or "/usr/local/include/luajit-2.0/",
     LIBPATH = os.getenv("LUAJIT_LIB_DIR") or "/usr/local/lib",
     LIBNAME = os.getenv("LUAJIT_LIB_NAME") or "luajit-5.1",
-    PKGPATH = os.getenv("PKG_CONFIG_PATH"),
     --
     --
     setupToolchain = function(self)
@@ -199,21 +198,6 @@ local Build = {
         self:runCmd(copy_binary)
         print("-- end -- \n")
     end,
-    prepareLuaOpenSSLLibrary = function(self, dir_name, name)
-        print("-- begin build lua-openssl -- ")
-        local clone_cmd =
-            fmt(
-            "if [ ! -d '%s' ]; then git clone --recurse https://github.com/zhaozg/lua-openssl.git --depth 1; fi;",
-            dir_name
-        )
-        local make_cmd =
-            fmt("cd %s; if [ ! -f '%s.so' ]; then export PKG_CONFIG_PATH=%s; make; fi; ", dir_name, name, self.PKGPATH)
-        local copy_binary = fmt("cd %s; cp %s.so %s/%s", dir_name, name, binary_dir, self:binaryName(name))
-        self:runCmd(clone_cmd)
-        self:runCmd(make_cmd)
-        self:runCmd(copy_binary)
-        print("-- end -- \n")
-    end
 }
 Build.__index = Build
 
@@ -226,7 +210,6 @@ print("CFLAGS: \t", Build.CFLAGS)
 print("LUAJIT_INC_DIR: ", Build.INCPTH)
 print("LUAJIT_LIB_DIR: ", Build.LIBPATH)
 print("LUAJIT_LIB_NAME: ", Build.LIBNAME)
-print("PKG_CONFIG_PATH: ", Build.PKGPATH)
 print("\n--- prepare to build\n")
 os.execute("sleep 3")
 
@@ -238,4 +221,3 @@ Build:prepareSprotoLibrary("sproto", "sproto")
 Build:prepareLpegLibrary("lpeg", "lpeg")
 Build:prepareLuaRedisClientLibrary("lua-resp", "resp")
 Build:prepareSerializeLibrary("lua-serialize", "packer")
-Build:prepareLuaOpenSSLLibrary("lua-openssl", "openssl")

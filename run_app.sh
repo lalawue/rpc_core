@@ -2,7 +2,7 @@
 #
 # luajit app launcher by lalawue
 
-LOCAL_DIR=$PWD/binaries/Local
+BIN_DIR=$PWD/binaries/bin
 BINARIES_DIR=$PWD/binaries/$(uname)
 
 if [ ! -d $BINARIES_DIR ]; then
@@ -15,11 +15,13 @@ export LUA_PATH="?.lua;middle/?.lua;"
 
 # system library and Lua library path
 if [ "$(uname)" = "Darwin" ]; then
-    export DYLD_LIBRARY_PATH=$BINARIES_DIR:$LOCAL_DIR/lib
+    export DYLD_LIBRARY_PATH=$BINARIES_DIR
     export LUA_CPATH=$BINARIES_DIR/lib?.dylib
+    export PATH=$PATH:$BIN_DIR
 else
-    export LD_LIBRARY_PATH=$BINARIES_DIR:$LOCAL_DIR/lib:/usr/lib:/usr/local/lib
+    export LD_LIBRARY_PATH=$BINARIES_DIR:/usr/lib:/usr/local/lib
     export LUA_CPATH=$BINARIES_DIR/lib?.so
+    export PATH=$PATH:$BIN_DIR
 fi
 
 # luajit invoke

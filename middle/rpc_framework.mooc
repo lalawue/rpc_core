@@ -48,7 +48,6 @@ struct RpcResponse {
 
 -- Framework
 --
-local AllLoopCallbackTable = {} -- chann index in callback
 
 local fn _closeChannAndParser(service_info, chann, rpc_parser, keep_alive) {
     if keep_alive {
@@ -183,31 +182,9 @@ struct Framework {
         return coroutine.yield()
     }
 
-    -- callback function(chann_key, "event_loop")
-    -- return index
-    static fn setLoopEvent(key, check_stop, finalizer) {
-        if not check_stop {
-            Log:error("invalid loop callback")
-        }
-        AllLoopCallbackTable[key] = { :check_stop, :finalizer }
-    }
-
     static fn pollForever(timeout_second) {
         millisecond = timeout_second and (tonumber(timeout_second) * 1000) or 1000
-        del_tbl = {}
         while true {
-            for key, func in pairs(AllLoopCallbackTable) {
-                if func.check_stop() {
-                    if func.finalizer {
-                        func.finalizer()
-                    }
-                    del_tbl[#del_tbl + 1] = key
-                }
-            }
-            for _, key in ipairs(del_tbl) {
-                AllLoopCallbackTable[key] = nil
-            }
-            del_tbl[1] = nil
             NetCore.poll(millisecond)
         }
     }

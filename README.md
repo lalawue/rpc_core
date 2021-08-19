@@ -5,6 +5,10 @@ rpc_framework was a LuaJIT base network bundle aim to easily build simple networ
 
 Support MacOS/Linux/FreeBSD/Windows.
 
+Not support https, you can use (stunnel)[https://www.stunnel.org/], [nginx](https://www.nginx.com/) or [openresty](https://openresty.org/) as HTTPS revers proxy.
+
+currently only support (MoonCake)[https://github.com/lalawue/mooncake], A Swift like programming language compiles to Lua, as its entry loader.
+
 
 # Build dependent libraries
 
@@ -12,10 +16,9 @@ first build dependent libraries, under MacOS/Linux/FreeBSD, just
 
 ```js
 $ cd build
-$ export LUAJIT_INC_DIR=/usr/local/include
+$ export LUAJIT_INC_DIR=/usr/local/include/luajit-2.1
 $ export LUAJIT_LIB_DIR=/usr/local/lib
-$ export LUAJIT_LIB_NAME=luajit
-$ export PKG_CONFIG_PATH=/usr/local/Cellar/openssl@1.1/1.1.1g/lib/pkgconfig
+$ export LUAJIT_LIB_NAME=luajit-5.1
 $ sh proj_build.sh
 ```
 waits clone, build, then copy binaries finish, or you can download pre-compiled binaries in [release](https://github.com/lalawue/rpc_framework/releases).

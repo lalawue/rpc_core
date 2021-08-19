@@ -6,7 +6,6 @@
 --
 
 import TcpRaw from "middle.tcp_stream.tcp_raw"
-import TcpSSL from "middle.tcp_stream.tcp_ssl"
 import UrlCore from "middle.url"
 import HttpParser from "middle.ffi_hyperparser"
 import RpcFramework from "middle.rpc_framework"
@@ -97,7 +96,7 @@ struct Browser {
     }
 
     --[[
-        request HTTP/HTTPS URL
+        request HTTP URL
         option as {
             inflate : false, -- default
             header : header, -- table
@@ -130,9 +129,6 @@ struct Browser {
         if url_info.scheme ~= "http" and url_info.scheme ~= "https" {
             Log:error("invalid scheme")
             return false
-        } elseif url_info.scheme == "https" and not TcpSSL {
-            Log:error("SSL module not ready, can not support 'HTTPS'")
-            return false
         }
 
         if type(url_info.host) ~= "string" {
@@ -163,11 +159,10 @@ struct Browser {
             port = url_info.port
         }
 
+        self._chann = TcpRaw()
         if url_info.scheme == "http" {
-            self._chann = TcpRaw()
             port = port and tonumber(port) or 80
         } else {
-            self._chann = TcpSSL()
             port = port and tonumber(port) or 443
         }
         url_info = false -- reset
@@ -224,7 +219,6 @@ struct Browser {
         if option and option.timeout {
             self._chann:setEventTimer(option.timeout)
         }
-        RpcFramework.setLoopEvent(tostring(self), { _ in return self:onLoopEvent() }, nil)
         Log:info("try connect %s:%d", ipv4, port)
         return coroutine.yield()
     }
