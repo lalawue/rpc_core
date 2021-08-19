@@ -2,7 +2,7 @@
 #
 # luajit app launcher by lalawue
 
-BIN_DIR=$PWD/binaries/bin
+BIN_DIR=$PWD/binaries/bin/
 BINARIES_DIR=$PWD/binaries/$(uname)
 
 if [ ! -d $BINARIES_DIR ]; then
