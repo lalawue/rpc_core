@@ -5,9 +5,9 @@ rpc_framework was a LuaJIT base network bundle aim to easily build simple networ
 
 Support MacOS/Linux/FreeBSD.
 
-Not support https, you can use (stunnel)[https://www.stunnel.org/], [nginx](https://www.nginx.com/) or [openresty](https://openresty.org/) as HTTPS revers proxy.
+Not support https, you can use [stunnel](https://www.stunnel.org/), [nginx](https://www.nginx.com/) or [openresty](https://openresty.org/) as HTTPS revers proxy.
 
-currently only support (MoonCake)[https://github.com/lalawue/mooncake], A Swift like programming language compiles to Lua, as its entry loader.
+currently only support [MoonCake](https://github.com/lalawue/mooncake), A Swift like programming language compiles to Lua, as its entry loader.
 
 
 # Build dependent libraries
