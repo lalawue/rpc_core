@@ -9,7 +9,7 @@
 -- raw tcp stated stream, interface should be same as tcp_ssl
 --
 
-import NetCore from "base.ffi_mnet"
+import NetCore from "ffi-mnet"
 Log = require("middle.logger")("[TcpRaw]", "error")
 
 _has_init = false

@@ -2,27 +2,32 @@
 #
 # luajit app launcher by lalawue
 
-BIN_DIR=$PWD/binaries/bin/
-BINARIES_DIR=$PWD/binaries/$(uname)
+LUA_JIT=luajit
 
-if [ ! -d $BINARIES_DIR ]; then
-    echo "binaries dir not exist, please cd build/ && ./proj_build.sh first !"
+which_program() {
+	which $1 > /dev/null
+	if [ "$?" = "1" ]; then
+		echo "\'$1\' NOT found, please install first !"
+		exit 0
+	fi
+}
+
+which_program $LUA_JIT
+
+BINARIES_DIR=$PWD/binaries/
+
+if [ ! -d $BINARIES_DIR/lib ]; then
+    echo "Libraries not exist, please cd $BINARIES_DIR && ./install.sh first !"
     exit 0
 fi
 
 # LuaJIT path
-export LUA_PATH="?.lua;middle/?.lua;"
 
 # system library and Lua library path
-if [ "$(uname)" = "Darwin" ]; then
-    export DYLD_LIBRARY_PATH=$BINARIES_DIR
-    export LUA_CPATH=$BINARIES_DIR/lib?.dylib
-    export PATH=$PATH:$BIN_DIR
-else
-    export LD_LIBRARY_PATH=$BINARIES_DIR:/usr/lib:/usr/local/lib
-    export LUA_CPATH=$BINARIES_DIR/lib?.so
-    export PATH=$PATH:$BIN_DIR
-fi
+export DYLD_LIBRARY_PATH=$BINARIES_DIR/lib/lua/5.1/
+export LUA_CPATH=$BINARIES_DIR/lib/lua/5.1/?.so
+export LUA_PATH="?.lua;middle/?.lua;$BINARIES_DIR/share/lua/5.1/?.lua"
+export PATH=$PATH:$BINARIES_DIR/bin/
 
 # luajit invoke
 exec moocscript app_launcher.mooc $*

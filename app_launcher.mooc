@@ -62,7 +62,7 @@ if type(AppEnv.Config.APP_DIR) == "string" and string.len(AppEnv.Config.APP_DIR)
 
 -- list apps if no app_name provide
 if app_name == nil {
-    lfs = require("base.ffi_lfs")
+    lfs = require("lfs")
     print("supported apps:")
     _listApps = { path in
         if path:len() <= 0 {

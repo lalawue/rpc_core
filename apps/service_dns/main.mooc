@@ -41,8 +41,8 @@ ffi.cdef([[
                          uint8_t *out_ipv4);
 ]])
 
-DnsCore = ffi.load("mdns_utils")
-import NetCore from "base.ffi_mnet"
+DnsCore = ffi.load("mnet")
+import NetCore from "ffi-mnet"
 import UrlCore from "middle.url"
 import AvlTree from "middle.avl"
 import AppFramework from "middle.app_framework"

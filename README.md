@@ -3,7 +3,7 @@
 
 rpc_framework was a LuaJIT base network bundle aim to easily build simple network apps. Like local DNS service provide RESTful JSON API, or a crawler rise requests to fetch gziped HTML pages.
 
-Support MacOS/Linux/FreeBSD/Windows.
+Support MacOS/Linux/FreeBSD.
 
 Not support https, you can use (stunnel)[https://www.stunnel.org/], [nginx](https://www.nginx.com/) or [openresty](https://openresty.org/) as HTTPS revers proxy.
 
@@ -12,24 +12,14 @@ currently only support (MoonCake)[https://github.com/lalawue/mooncake], A Swift 
 
 # Build dependent libraries
 
-first build dependent libraries, under MacOS/Linux/FreeBSD, just
+require [LuaJIT](https://luajit.org/) and [LuaRocks](https://luarocks.org/), please install it first.
 
 ```js
-$ cd build
-$ export LUAJIT_INC_DIR=/usr/local/include/luajit-2.1
-$ export LUAJIT_LIB_DIR=/usr/local/lib
-$ export LUAJIT_LIB_NAME=luajit-5.1
-$ sh proj_build.sh
-```
-waits clone, build, then copy binaries finish, or you can download pre-compiled binaries in [release](https://github.com/lalawue/rpc_framework/releases).
-
-by the way, you can use your own build script as proj_build.lua, run as
-
-```js
-$ cd build
-$ sh proj_build.sh YOUR_BUILD_SCRIPT.lua
+$ cd binaries
+$ ./bootstrap.sh
 ```
 
+here will install required rocks tree in binaries/ dir.
 
 # Launch App
 

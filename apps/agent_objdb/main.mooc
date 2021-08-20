@@ -5,7 +5,7 @@
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
-import NetCore from "base.ffi_mnet"
+import NetCore from "ffi-mnet"
 import FileManager from "middle.file_manager"
 import AppFramework from "middle.app_framework"
 import Sha from "middle.sha2"
