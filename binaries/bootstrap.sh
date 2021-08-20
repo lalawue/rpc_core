@@ -26,6 +26,7 @@ $INSTALL lua-resp
 $INSTALL lua-serialize
 $INSTALL sproto
 $INSTALL lua-cjson
+$INSTALL serpent
 
 BINARIES_DIR=lib/lua/5.1/
 

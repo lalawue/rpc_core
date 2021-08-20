@@ -7,7 +7,7 @@
 
 import NetCore from "ffi-mnet"
 import FileManager from "middle.file_manager"
-import AppFramework from "middle.app_framework"
+import AppBase from "middle.app_base"
 import Sha from "middle.sha2"
 Log = require("middle.logger")("[ObjdbCnt]", "info")
 export AppENV
@@ -15,7 +15,7 @@ export AppENV
 local _option = {}
 local _protocol = AppEnv.Service.OBJDB_RESP   
 
-class ObjCnt : AppFramework {
+class ObjCnt : AppBase {
 
      fn init(app_name, ipv4) {
         ipv4 = ipv4 or AppEnv.Service.OBJDB_RESP.ipv4
@@ -26,7 +26,7 @@ class ObjCnt : AppFramework {
         NetCore.setBufSize(size, size)
     }
 
-    fn startBusiness(rpc_framework) {
+    fn startBusiness(rpc_core) {
         while true {
             io.write(string.format("%s> ", self._ipv4))
             tbl = self:split(io.read())
@@ -36,29 +36,29 @@ class ObjCnt : AppFramework {
                 cmd = tbl[1]:upper()
                 switch cmd {
                 case "SET":
-                    self:_cmdSet(rpc_framework, tbl[2], tbl[3])
+                    self:_cmdSet(rpc_core, tbl[2], tbl[3])
                 case "SETF":
-                    self:_cmdSetFile(rpc_framework, tbl[2], tbl[3])
+                    self:_cmdSetFile(rpc_core, tbl[2], tbl[3])
                 case "GET":
-                    self:_cmdGet(rpc_framework, tbl[2])
+                    self:_cmdGet(rpc_core, tbl[2])
                 case "DEL":
-                    self:_cmdDel(rpc_framework, tbl[2])
+                    self:_cmdDel(rpc_core, tbl[2])
                 case "KEYS":
-                    self:_cmdKeys(rpc_framework, tbl[2])
+                    self:_cmdKeys(rpc_core, tbl[2])
                 case "HELP":
-                    self:_cmdHelp(rpc_framework)
+                    self:_cmdHelp(rpc_core)
                 }
             }
         }
     }
 
-    fn _cmdSet(rpc_framework, key, value) {
+    fn _cmdSet(rpc_core, key, value) {
         if type(key) ~= "string" or type(value) ~= "string" or key:len() <= 0 or value:len() <= 0 {
             Log:error("Usage: SET KEY VALUE")
         } else {
             _option.ipv4 = self._ipv4
             _option.keep_alive = true
-            status, ret = rpc_framework.newRequest(_protocol, _option, {"SET", key, value})
+            status, ret = rpc_core.newRequest(_protocol, _option, {"SET", key, value})
             if status {
                 self:printstr(ret)
             } else {
@@ -67,7 +67,7 @@ class ObjCnt : AppFramework {
         }
     }
 
-    fn _cmdSetFile(rpc_framework, key, fpath) {
+    fn _cmdSetFile(rpc_core, key, fpath) {
         if type(key) ~= "string" or type(fpath) ~= "string" or key:len() <= 0 or fpath:len() <= 0 {
             Log:error("Usage: SET KEY VALUE")
         } else {
@@ -75,7 +75,7 @@ class ObjCnt : AppFramework {
             if content {
                 _option.ipv4 = self._ipv4
                 _option.keep_alive = true
-                status, ret = rpc_framework.newRequest(_protocol, _option, {"SET", key, content})
+                status, ret = rpc_core.newRequest(_protocol, _option, {"SET", key, content})
                 if status {
                     self:printstr(ret)
                 } else {
@@ -87,13 +87,13 @@ class ObjCnt : AppFramework {
         }
     }
 
-    fn _cmdGet(rpc_framework, key) {
+    fn _cmdGet(rpc_core, key) {
         if type(key) ~= "string" or key:len() <= 0 {
             Log:error("Usage: GET KEY")
         } else {
             _option.ipv4 = self._ipv4
             _option.keep_alive = true
-            status, ret = rpc_framework.newRequest(_protocol, _option, {"GET", key})
+            status, ret = rpc_core.newRequest(_protocol, _option, {"GET", key})
             if status {
                 self:printstr(ret)
             } else {
@@ -102,13 +102,13 @@ class ObjCnt : AppFramework {
         }
     }
 
-    fn _cmdDel(rpc_framework, key) {
+    fn _cmdDel(rpc_core, key) {
         if type(key) ~= "string" or key:len() <= 0 {
             Log:error("Usage: GET KEY")
         } else {
             _option.ipv4 = self._ipv4
             _option.keep_alive = true
-            status, ret = rpc_framework.newRequest(_protocol, _option, {"DEL", key})
+            status, ret = rpc_core.newRequest(_protocol, _option, {"DEL", key})
             if status and type(ret) == "number" {
                 print(string.format("(Integer) %d", ret))
             } else {
@@ -117,13 +117,13 @@ class ObjCnt : AppFramework {
         }
     }
 
-    fn _cmdKeys(rpc_framework, pattern) {
+    fn _cmdKeys(rpc_core, pattern) {
         if type(pattern) ~= "string" or pattern:len() <= 0 {
             Log:error("Usage: KEYS PATTERN")
         } else {
             _option.ipv4 = self._ipv4
             _option.keep_alive = true
-            status, ret = rpc_framework.newRequest(_protocol, _option, {"KEYS", pattern})
+            status, ret = rpc_core.newRequest(_protocol, _option, {"KEYS", pattern})
             if status and type(ret) == "table" {
                 if #ret <= 0 {
                     print("(empty list or set)")

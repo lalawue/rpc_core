@@ -6,7 +6,7 @@
 --
 
 import ffi from "ffi"
-import AppFramework from "middle.app_framework"
+import AppBase from "middle.app_base"
 import FileManager from "middle.file_manager"
 import Bitcask from "middle.ffi_bitcask"
 Log = require("middle.logger")("[ObjDB]", "info")
@@ -14,7 +14,7 @@ export AppEnv
 
 -- object storage using redis resp_v2's 'SET/GET/DEL/KEYS', and 'SYNC' for sync linked objdb
 --
-class ObjDB : AppFramework {
+class ObjDB : AppBase {
 
     fn init(app_name) {
         -- create dir
@@ -23,16 +23,16 @@ class ObjDB : AppFramework {
     }
 
     -- ./bitraft/bitraft --bind '127.0.0.1:6379' --consistency low -d $PWD/data_master
-    fn loadBusiness(rpc_framework) {
+    fn loadBusiness(rpc_core) {
         -- open database
         self:loadObjDB()
         -- start service
-        rpc_framework.newService(AppEnv.Service.OBJDB_RESP, { a, b, c in
+        rpc_core.newService(AppEnv.Service.OBJDB_RESP, { a, b, c in
             return Self.processRequest(self, a, b, c)
         })
     }
 
-    fn startBusiness(rpc_framework) {
+    fn startBusiness(rpc_core) {
     }
 
     -- internal interface

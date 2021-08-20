@@ -44,8 +44,8 @@ ffi.cdef([[
 DnsCore = ffi.load("mnet")
 import NetCore from "ffi-mnet"
 import UrlCore from "middle.url"
-import AvlTree from "middle.avl"
-import AppFramework from "middle.app_framework"
+import AvlTree from "middle.avl_tree"
+import AppBase from "middle.app_base"
 Log = require("middle.logger")("[DNS]", "debug")
 export AppEnv
 
@@ -57,7 +57,7 @@ _buf = ffi.new("uint8_t[?]", 1024)
 _domain = ffi.new("uint8_t[?]", 256)
 _out_ipv4 = ffi.new("uint8_t[?]", 4)
 
-class DNS : AppFramework {
+class DNS : AppBase {
 
     _app_timeout = 0
     _svr_tbl = false
@@ -80,22 +80,22 @@ class DNS : AppFramework {
         math.randomseed(os.time())
     }
 
-    fn loadBusiness(rpc_framework) {
+    fn loadBusiness(rpc_core) {
         -- init udp for query DNS
         self:_initUdpQueryChanns()
 
         -- init JSON service RPC
-        rpc_framework.newService(AppEnv.Service.DNS_JSON, { a, b, c in
+        rpc_core.newService(AppEnv.Service.DNS_JSON, { a, b, c in
             return self:_httpJsonServiceHandler(a, b, c)
         })
 
         -- init Sproto service RPC
-        rpc_framework.newService(AppEnv.Service.DNS_SPROTO, { a, b, c in
+        rpc_core.newService(AppEnv.Service.DNS_SPROTO, { a, b, c in
             return self:_sprotoServiceHandler(a, b, c)
         })
     }
 
-    fn startBusiness(rpc_framework) {
+    fn startBusiness(rpc_core) {
         -- no coroutine code here
     }
 

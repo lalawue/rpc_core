@@ -1,7 +1,7 @@
 
 # About
 
-rpc_framework was a LuaJIT base network bundle aim to easily build simple network apps. Like local DNS service provide RESTful JSON API, or a crawler rise requests to fetch gziped HTML pages.
+rpc_core was a LuaJIT base network bundle aim to easily build simple network apps. Like local DNS service provide RESTful JSON API, or a crawler rise requests to fetch gziped HTML pages.
 
 Support MacOS/Linux/FreeBSD.
 
@@ -44,8 +44,8 @@ $ ./run_app.sh service_dns
 APP_ENV_CONFIG: not set, use config/app_env.mooc instead
 I.[AppEnv] parse sproto spec config/rpc_spec.sproto
 I.[App] 'DNS' load business
-I.[RPC] rpc_framework start service 'dns_json' at '127.0.0.1:10053'
-I.[RPC] rpc_framework start service 'dns_sproto' at '127.0.0.1:10054'
+I.[RPC] rpc_core start service 'dns_json' at '127.0.0.1:10053'
+I.[RPC] rpc_core start service 'dns_sproto' at '127.0.0.1:10054'
 I.[App] 'DNS' start business coroutine
 ```
 
@@ -102,7 +102,7 @@ services name, ip, port, protocol, including extra APP_DIR, TMP_DIR, DATA_DIR ar
 
 you can use difference app_env.mooc for difference app instance, just export APP_ENV_CONFIG=/PATH/To/YOUR/app_env.mooc before run_app.sh.
 
-you can use another apps dir in AppEnv.Config.APP_DIR, outside rpc_framework/apps/.
+you can use another apps dir in AppEnv.Config.APP_DIR, outside rpc_core/apps/.
 
 
 # Setup a RESTful JSON API
@@ -133,17 +133,17 @@ then setup service callback with app framework in App:loadBusiness()
 
 ```lua
 import UrlCore from "middle.url"
-import AppFramework from "middle.app_framework"
+import AppBase from "middle.app_framework"
 
 -- create App instance
-class MyService : AppFramework {
+class MyService : AppBase {
 
    fn init(app_name, ...) {
       -- get command line params in function params
    }
 
-   fn loadBusiness( rpc_framework ) {
-      rpc_framework.newService(AppEnv.Service.DNS_JSON, { proto_info, request_object, rpc_response in
+   fn loadBusiness( rpc_core ) {
+      rpc_core.newService(AppEnv.Service.DNS_JSON, { proto_info, request_object, rpc_response in
          url = UrlCore.parse(proto_info.url)
          table.dump( url ) -- dump URL info
          table.dump( request_object ) -- dump JSON objct
@@ -152,7 +152,7 @@ class MyService : AppFramework {
       }
    }
 
-   fn startBusiness( rpc_framework ) {
+   fn startBusiness( rpc_core ) {
       -- service no coroutine code
    }
 
@@ -173,11 +173,11 @@ more complicated service app is apps/service_dns, which provide HTTP_JSON and SP
 like apps/agent_test, create middle.http_browser instance, request gziped HTML pages.
 
 ```lua
-import AppFramework from "middle.app_framework"
+import AppBase from "middle.app_framework"
 import Browser from "middle.http_browser"
 Log = require("middle.logger")("[AgentExample]", "info")
 
-class AppExample : AppFramework {
+class AppExample : AppBase {
 
    fn init(app_name, arg_1) {
       self._app_name = app_name
@@ -190,12 +190,12 @@ class AppExample : AppFramework {
       }
    }
 
-   fn loadBusiness(rpc_framework) {
+   fn loadBusiness(rpc_core) {
       -- as client, do nothing here
    }
 
    -- coroutine business
-   fn startBusiness(rpc_framework) {
+   fn startBusiness(rpc_core) {
       browser = Browser({ timeout: 30, inflate: true })
       success, http_header, content = browser:openURL(self.m_domain)
       Log:info("reqeust result: %s", success)

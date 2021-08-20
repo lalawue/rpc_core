@@ -5,14 +5,14 @@
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
-import AppFramework from "middle.app_framework"
+import AppBase from "middle.app_base"
 import UrlCore from "middle.url"
-import RpcFramework from "middle.rpc_framework"
+import RpcCore from "middle.rpc_core"
 import Browser from "middle.http_browser"
 import FileManager from "middle.file_manager"
 local Log = require("middle.logger")("[Test]", "info")
 
-class Test : AppFramework {
+class Test : AppBase {
 
     _app_name = ""
     _store_file_name = ""
@@ -30,11 +30,11 @@ class Test : AppFramework {
         }
     }
 
-    fn loadBusiness(rpc_framework) {
+    fn loadBusiness(rpc_core) {
         -- as client, do nothing here
     }
 
-    fn startBusiness(rpc_framework) {
+    fn startBusiness(rpc_core) {
         -- test HTTP_JSON and LUA_SPROTO
         url_info = UrlCore.parse(self._url)
 
@@ -63,16 +63,16 @@ class Test : AppFramework {
             timeout_second = AppEnv.Config.RPC_TIMEOUT
             path_args = { "domain" : url_info.host } -- use HTTP path query string, whatever key
 
-            success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout : timeout_second}, path_args)
+            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_JSON, {timeout : timeout_second}, path_args)
             Log:info("DNS_JSON with path_args result %s", success)
 
-            success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, {timeout : timeout_second}, nil, path_args)
+            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_JSON, {timeout : timeout_second}, nil, path_args)
             Log:info("DNS_JSON with body_args result %s", success)
 
-            success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, {timeout : timeout_second}, path_args)
+            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_SPROTO, {timeout : timeout_second}, path_args)
             Log:info("LUA_SPROTO with path_args result %s", success)
 
-            success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_SPROTO, {timeout : timeout_second}, nil, path_args)
+            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_SPROTO, {timeout : timeout_second}, nil, path_args)
             Log:info("LUA_SPROTO with body_args result %s", success)
 
             if not success {

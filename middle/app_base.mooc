@@ -5,11 +5,11 @@
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
-import RpcFramework from "middle.rpc_framework"
+import RpcCore from "middle.rpc_core"
 Log = require("middle.logger")("[App]", "info")
 
 -- app framework, start app business in coroutine
-class AppFramework {
+class AppBase {
 
    -- for subclass
    -- function App:initialize(...)
@@ -17,28 +17,28 @@ class AppFramework {
 
    -- launch app
    fn launch() {
-      RpcFramework.initFramework()
+      RpcCore.initFramework()
       Log:info("'%s' load business", self.typename)
-      self:loadBusiness(RpcFramework)
+      self:loadBusiness(RpcCore)
       co = coroutine.create({ _ in
          Log:info("'%s' start business coroutine", self.typename)
-         self:startBusiness(RpcFramework)
+         self:startBusiness(RpcCore)
       })
       coroutine.resume(co)
-      RpcFramework.pollForever(self._app_timeout)
+      RpcCore.pollForever(self._app_timeout)
    }
 
    -- MARK: for subclass
 
    -- for subclass, no coroutine
-   fn loadBusiness(rpc_framework) {
+   fn loadBusiness(rpc_core) {
       -- load your business code here
    }
 
    -- for subclass, coroutine business
-   fn startBusiness(rpc_framework) {
+   fn startBusiness(rpc_core) {
       -- start your business code here
    }
 }
 
-return AppFramework
+return AppBase

@@ -8,7 +8,7 @@
 import TcpRaw from "middle.tcp_stream.tcp_raw"
 import UrlCore from "middle.url"
 import HttpParser from "middle.ffi_hyperparser"
-import RpcFramework from "middle.rpc_framework"
+import RpcCore from "middle.rpc_core"
 import FileManager from "middle.file_manager"
 Log = require("middle.logger")("[Browser]", "info")
 
@@ -149,7 +149,7 @@ struct Browser {
             timeout_second = option and option.timeout or AppEnv.Config.RPC_TIMEOUT
             path_args = { domain : url_info.host } -- use HTTP path query string, whatever key
 
-            success, datas = RpcFramework.newRequest(AppEnv.Service.DNS_JSON, { timeout : timeout_second }, path_args)
+            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_JSON, { timeout : timeout_second }, path_args)
             if not success or table.isempty(datas) {
                 Log:error("failed to dns '%s'", url_info.host)
                 return false

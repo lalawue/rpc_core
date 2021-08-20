@@ -6,8 +6,8 @@
 --
 
 import NetCore from "ffi-mnet"
-import RpcDial from "rpc_framework.rpc_dial.rpc_dial"
-import RpcParser from "rpc_framework.rpc_parser.rpc_parser"
+import RpcDial from "rpc_core.rpc_dial.rpc_dial"
+import RpcParser from "rpc_core.rpc_parser.rpc_parser"
 Log = require("middle.logger")("[RPC]", "info")
 
 -- Response for servce
@@ -70,7 +70,7 @@ struct Framework {
     -- service_handler return false to shutdown connection
     static fn newService(service_info, service_handler) {
         if type(service_info) ~= "table" or type(service_handler) ~= "function" {
-            Log:error("rpc_framework new service invalid params, %s", debug.traceback())
+            Log:error("rpc_core new service invalid params, %s", debug.traceback())
             return false
         }
 
@@ -110,7 +110,7 @@ struct Framework {
             }) -- callback
         })
 
-        Log:info("rpc_framework start service '%s' at '%s:%d'", service_info.name, service_info.ipv4, service_info.port)
+        Log:info("rpc_core start service '%s' at '%s:%d'", service_info.name, service_info.ipv4, service_info.port)
         return true
     }
 
@@ -127,11 +127,11 @@ struct Framework {
     static fn newRequest(service_info, option_args, path_args, body_args) {
         thread = coroutine.running()
         if thread == nil {
-            Log:error("rpc_framework request should call from coroutine")
+            Log:error("rpc_core request should call from coroutine")
             return false
         }
         if type(service_info) ~= "table" {
-            Log:error("rpc_framework request params invalid, %s", debug.traceback())
+            Log:error("rpc_core request params invalid, %s", debug.traceback())
             return false
         }
 

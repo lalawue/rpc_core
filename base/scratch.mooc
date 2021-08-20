@@ -7,7 +7,7 @@
 
 -- export to global
 
-import serpent from "base.serpent"
+import serpent from "serpent"
 
 -- string
 --
