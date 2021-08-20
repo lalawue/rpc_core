@@ -222,7 +222,8 @@ or apps/service_objdb using RESP (Redis Protocol specification 2) for object sto
 Thanks people provide libraries below:
 
 - [LuaJIT](http://luajit.org/), a Just-In-Time Compiler for Lua by Mike Pall 
-- [sonoro1234/luafilesystem](https://github.com/sonoro1234/luafilesystem), Reimplement luafilesystem via LuaJIT FFI with unicode facilities
+- [lpeg](https://github.com/LuaDist/lpeg), Parsing Expression Grammars For Lua
+- [luafilesystem](https://github.com/keplerproject/luafilesystem)
 - [hamishforbes/lua-ffi-zlib](https://github.com/hamishforbes/lua-ffi-zlib)
 - [pkulchenko/serpent](https://github.com/pkulchenko/serpent), Lua serializer and pretty printer
 - [openssl/openssl](https://github.com/openssl/openssl), TLS/SSL and crypto library
@@ -231,13 +232,11 @@ Thanks people provide libraries below:
 - [msva/lua-htmlparser](https://github.com/msva/lua-htmlparser), An HTML parser for lua
 - [golgote/neturl](https://github.com/golgote/neturl), URL and Query string parser, builder, normalizer for Lua
 - [cloudwu/sproto](https://github.com/cloudwu/sproto), Yet another protocol library like google protocol buffers , but simple and fast
-- [lpeg](https://github.com/LuaDist/lpeg), Parsing Expression Grammars For Lua
 - [mah0x211/lua-resp](https://github.com/mah0x211/lua-resp), RESP (REdis Serialization Protocol) parser for Lua
 - [slembcke/debugger.lua](https://github.com/slembcke/debugger.lua), A simple, embedabble CLI debugger for Lua
-- [ColonelThirtyTwo/lsqlite3-ffi](https://github.com/ColonelThirtyTwo/lsqlite3-ffi), Lua SQLite using LuaJIT's FFI library
 - [cloudwu/lua-serialize](https://github.com/cloudwu/lua-serialize), Serialize lua objects into a binary block
 - [TiagoDanin/htmlEntities-for-lua](https://github.com/TiagoDanin/htmlEntities-for-lua)
 - [m_net](https://github.com/lalawue/m_net)
-- [m_dnsutils](https://github.com/lalawue/m_dnsutils)
 - [ffi_bitcask.lua](https://github.com/lalawue/ffi_bitcask.lua)
+- [sql-orm](https://github.com/lalawue/Lua4DaysORM)
 - [mooncake](https://github.com/lalawue/mooncake)

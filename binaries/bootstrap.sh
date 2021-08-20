@@ -27,6 +27,7 @@ $INSTALL lua-serialize
 $INSTALL sproto
 $INSTALL lua-cjson
 $INSTALL serpent
+$INSTALL sql-orm
 
 BINARIES_DIR=lib/lua/5.1/
 
