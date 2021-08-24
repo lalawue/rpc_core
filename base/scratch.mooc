@@ -133,3 +133,12 @@ export struct Lang {
         return true
     }
 }
+
+fn tracebackHandler(msg) {
+    print("\nPANIC : " .. tostring(msg) .. "\n")
+    print(debug.traceback())
+}
+
+return {
+    :tracebackHandler
+}

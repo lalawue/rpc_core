@@ -30,4 +30,4 @@ export LUA_PATH="?.lua;middle/?.lua;$BINARIES_DIR/share/lua/5.1/?.lua"
 export PATH=$PATH:$BINARIES_DIR/bin/
 
 # luajit invoke
-exec moocscript app_launcher.mooc $*
+exec moocscript launcher.mooc $*

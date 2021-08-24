@@ -35,19 +35,14 @@ if not fp {
     fp:close()
 }
 
-fn tracebackHandler(msg) {
-    print("\nPANIC : " .. tostring(msg) .. "\n")
-    print(debug.traceback())
-}
-
 status = false
 
 -- treat Class as keyword
 import Core from "moocscript.core"
-import "base.scratch"
+import Base from "base.scratch"
 
 -- load AppEnv as global
-export status, AppEnv = xpcall(Core.dofile, tracebackHandler, env_config_path)
+export status, AppEnv = xpcall(Core.dofile, Base.tracebackHandler, env_config_path)
 if not status {
     os.exit(0)
 } else {
@@ -92,7 +87,7 @@ if jit.os == "Windows" {
 
 -- create app instance, app:initialize(...) then app:launch()
 app_path = string.format("%s/%s/main.mooc", apps_dir, app_name)
-st, app_clazz = xpcall(Core.loadfile, tracebackHandler, app_path)
+st, app_clazz = xpcall(Core.loadfile, Base.tracebackHandler, app_path)
 if st and type(app_clazz) == "function" {
     app_instance = app_clazz()(...)
     app_instance:launch()

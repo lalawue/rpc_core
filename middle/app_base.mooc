@@ -5,6 +5,7 @@
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
+import Base from "base.scratch"
 import RpcCore from "middle.rpc_core"
 Log = require("middle.logger")("[App]", "info")
 
@@ -19,10 +20,16 @@ class AppBase {
    fn launch() {
       RpcCore.initFramework()
       Log:info("'%s' load business", self.typename)
-      self:loadBusiness(RpcCore)
+      guard xpcall(self.loadBusiness, Base.tracebackHandler, self, RpcCore) else {
+         os.exit(0)
+         return
+      }
       co = coroutine.create({ _ in
          Log:info("'%s' start business coroutine", self.typename)
-         self:startBusiness(RpcCore)
+         guard xpcall(self.startBusiness, Base.tracebackHandler, self, RpcCore) else {
+            os.exit(0)
+            return
+         }
       })
       coroutine.resume(co)
       RpcCore.pollForever(self._app_timeout)
