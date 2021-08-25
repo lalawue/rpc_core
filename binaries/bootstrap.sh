@@ -28,6 +28,7 @@ $INSTALL sproto
 $INSTALL lua-cjson
 $INSTALL serpent
 $INSTALL sql-orm
+$INSTALL date
 
 BINARIES_DIR=lib/lua/5.1/
 
