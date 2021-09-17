@@ -21,6 +21,7 @@ struct FileManager {
     }
 
     -- travel dir files, tbl_modes should be { "file" = true, "directory" = true }
+    -- return dirs / files in recursive table, and dir name in table[1]
     static fn travelDir(dir_path, tbl_modes) {
         print(dir_path)
         if type(dir_path) ~= "string" or type(tbl_modes) ~= "table" {
@@ -31,18 +32,26 @@ struct FileManager {
             return Self._dummy_tbl
         }
         tbl = {}
+        do {
+            s, e = dir_path:reverse():find("/", 1, true)
+            if s {
+                tbl[1] = dir_path:sub(dir_path:len() - s + 2)
+            } else {
+                tbl[1] = ""
+            }
+        }
         for fname in FileSystem.dir(dir_path) {
             attr = FileSystem.attributes(dir_path .. "/" .. fname)
             if attr and tbl_modes[attr.mode] and fname:sub(1,1) ~= '.' {
                 if attr.mode == "directory"  {
                     dir = Self.travelDir(dir_path .. "/" .. fname, tbl_modes)
-                    dir.dir_name = fname
                     tbl[#tbl + 1] = dir
                 } else {
                     tbl[#tbl + 1] = fname
                 }
             }
         }
+        table.dump(tbl)
         return tbl
     }
 
