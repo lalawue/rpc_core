@@ -8,6 +8,14 @@
 import FileSystem from "lfs"
 import Zlib from "base.ffi_zlib"
 
+type = type
+ioOpen = io.open
+osRemove = os.remove
+osRename = os.rename
+tableConcat = table.concat
+tableSort = table.sort
+mathMin = math.min
+
 _dummy_tbl = {}
 
 struct FileManager {
@@ -21,9 +29,8 @@ struct FileManager {
     }
 
     -- travel dir files, tbl_modes should be { "file" = true, "directory" = true }
-    -- return dirs / files in recursive table, and dir name in table[1]
+    -- return dirs / files in recursive table, and dir name in table.dir_name
     static fn travelDir(dir_path, tbl_modes) {
-        print(dir_path)
         if type(dir_path) ~= "string" or type(tbl_modes) ~= "table" {
             return Self._dummy_tbl
         }
@@ -35,9 +42,7 @@ struct FileManager {
         do {
             s, e = dir_path:reverse():find("/", 1, true)
             if s {
-                tbl[1] = dir_path:sub(dir_path:len() - s + 2)
-            } else {
-                tbl[1] = ""
+                tbl.dir_name = dir_path:sub(dir_path:len() - s + 2)
             }
         }
         for fname in FileSystem.dir(dir_path) {
@@ -51,13 +56,13 @@ struct FileManager {
                 }
             }
         }
-        table.dump(tbl)
+        tableSort(tbl, Self._compNames)
         return tbl
     }
 
     -- save data to path
     static fn saveFile(file_path, data) {
-        f = io.open(file_path, "wb")
+        f = ioOpen(file_path, "wb")
         if f {
             f:write(data)
             f:close()
@@ -67,7 +72,7 @@ struct FileManager {
     }
 
     static fn readFile(file_path) {
-        f = io.open(file_path, "rb")
+        f = ioOpen(file_path, "rb")
         if f {
             data = f:read("*a")
             f:close()
@@ -77,7 +82,7 @@ struct FileManager {
     }
 
     static fn appendFile(file_path, data) {
-        f = io.open(file_path, "a+")
+        f = ioOpen(file_path, "a+")
         if f {
             f:write(data)
             f:close()
@@ -87,11 +92,11 @@ struct FileManager {
     }
 
     static fn removeFile(file_path) {
-        os.remove(file_path)
+        osRemove(file_path)
     }
 
     static fn renameFile(oldname, newname) {
-        os.rename(oldname, newname)
+        osRename(oldname, newname)
     }
 
     static fn inflate(input_content) {
@@ -99,7 +104,7 @@ struct FileManager {
             return nil
         }
         _input = { buf_size in
-            min_len = math.min(buf_size, input_content:len())
+            min_len = mathMin(buf_size, input_content:len())
             if min_len > 0 {
                 data = input_content:sub(1, min_len)
                 input_content = input_content:sub(1 + min_len)
@@ -112,9 +117,9 @@ struct FileManager {
         }
         success, err_msg = Zlib.inflateGzip(_input, _ouput)
         if not success {
-            return table.concat(tbl), err_msg
+            return tableConcat(tbl), err_msg
         }
-        return table.concat(tbl)
+        return tableConcat(tbl)
     }
 
     static fn deflate(input_content) {
@@ -122,7 +127,7 @@ struct FileManager {
             return nil
         }
         _input = { buf_size in
-            min_len = math.min(buf_size, input_content:len())
+            min_len = mathMin(buf_size, input_content:len())
             if min_len > 0 {
                 data = input_content:sub(1, min_len)
                 input_content = input_content:sub(1 + min_len)
@@ -135,9 +140,9 @@ struct FileManager {
         }
         success, err_msg = Zlib.deflateGzip(_input, _ouput)
         if not success {
-            return table.concat(tbl), err_msg
+            return tableConcat(tbl), err_msg
         }
-        return table.concat(tbl)
+        return tableConcat(tbl)
     }
 }
 
