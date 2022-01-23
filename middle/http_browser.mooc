@@ -147,9 +147,9 @@ struct Browser {
             port = url_info.port
         } else {
             timeout_second = option and option.timeout or AppEnv.Config.RPC_TIMEOUT
-            path_args = { domain : url_info.host } -- use HTTP path query string, whatever key
+            path_args = { domain = url_info.host } -- use HTTP path query string, whatever key
 
-            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_JSON, { timeout : timeout_second }, path_args)
+            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_JSON, { timeout = timeout_second }, path_args)
             if not success or table.isempty(datas) {
                 Log:error("failed to dns '%s'", url_info.host)
                 return false

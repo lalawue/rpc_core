@@ -8,17 +8,18 @@
 import FileSystem from "lfs"
 import Zlib from "base.ffi_zlib"
 
-type = type
-ioOpen = io.open
-osRemove = os.remove
-osRename = os.rename
-tableConcat = table.concat
-tableSort = table.sort
-mathMin = math.min
-
-_dummy_tbl = {}
+local type = type
+local print = print
+local ioOpen = io.open
+local osRemove = os.remove
+local osRename = os.rename
+local tableConcat = table.concat
+local tableSort = table.sort
+local mathMin = math.min
 
 struct FileManager {
+
+    _dummy_tbl = {}
 
     static fn stat(path) {
         return FileSystem.attributes(path)
@@ -31,6 +32,7 @@ struct FileManager {
     -- travel dir files, tbl_modes should be { "file" = true, "directory" = true }
     -- return dirs / files in recursive table, and dir name in table.dir_name
     static fn travelDir(dir_path, tbl_modes) {
+        Self.validatePath(dir_path)
         if type(dir_path) ~= "string" or type(tbl_modes) ~= "table" {
             return Self._dummy_tbl
         }
@@ -42,7 +44,8 @@ struct FileManager {
         do {
             s, e = dir_path:reverse():find("/", 1, true)
             if s {
-                tbl.dir_name = dir_path:sub(dir_path:len() - s + 2)
+                tbl.name = dir_path:sub(dir_path:len() - s + 2)
+                tbl.attr = attr
             }
         }
         for fname in FileSystem.dir(dir_path) {
@@ -52,7 +55,7 @@ struct FileManager {
                     dir = Self.travelDir(dir_path .. "/" .. fname, tbl_modes)
                     tbl[#tbl + 1] = dir
                 } else {
-                    tbl[#tbl + 1] = fname
+                    tbl[#tbl + 1] = { name = fname, =attr }
                 }
             }
         }
@@ -143,6 +146,10 @@ struct FileManager {
             return tableConcat(tbl), err_msg
         }
         return tableConcat(tbl)
+    }
+
+    static fn _compNames(t1, t2) {
+        return t1.name < t2.name
     }
 }
 

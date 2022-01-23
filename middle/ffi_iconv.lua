@@ -36,18 +36,18 @@ _M._VERSION = '0.2.0'
 
 local mt = { __index = _M }
 
-function _M.new(self, to, from, _maxsize)
+function _M.new(self, to, frm, _maxsize)
     if not to or 'string' ~= type(to) or 1 > #to then
         return nil, 'dst charset required'
     end
-    if not from or 'string' ~= type(from) or 1 > #from then
+    if not frm or 'string' ~= type(frm) or 1 > #frm then
         return nil, 'src charset required'
     end
     _maxsize = tonumber(_maxsize) or maxsize
-    local ctx = iconv_lib.iconv_open(to, from)
+    local ctx = iconv_lib.iconv_open(to, frm)
     if ctx == iconv_open_err then
         iconv_lib.iconv_close(ctx)
-        return nil, ('conversion from %s to %s is not supported'):format(from, to)
+        return nil, ('conversion from %s to %s is not supported'):format(frm, to)
     else
         ctx = ffi_gc(ctx, iconv_lib.iconv_close)
         local buffer = ffi_new('char[' .. _maxsize .. ']')

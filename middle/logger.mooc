@@ -1,75 +1,112 @@
 --
--- Copyright (c) 2019 lalawue
+-- Copyright (c) 2020 lalawue
 --
 -- This library is free software; you can redistribute it and/or modify it
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
-local _level_name_number = {
-    "debug" : 1,
-    "trace" : 2,
-    "info" : 3,
-    "warn" : 4,
-    "error" : 5
-}
-
-local _fpTagPrintf = fn() {
-}
+dbgInfo = debug.getinfo
+mmax = math.max
+mmin = math.min
+sfmt = string.format
+odate = os.date
+otime = os.time
+local print = print
+local type = type
+local tostring = tostring
 
 struct Logger {
-    _name = "[Logger] "
-    _level = 1
-    _tags = false
 
-    -- set output file in app:initialize()
-    fn setOutputFile(file_path) {
-        fp = (type(file_path) == "string") and io.open(file_path, "ab+") or nil
-        if fp {
-            _fpTagPrintf = fn(content) {
-                fp:write(content .. "\n")
-                fp:flush()
-            }
+    _fp = false
+    _level = 2 -- default info level
+
+    _fname_tbl = {}
+
+    _last_min = -1
+    _last_fmt = ''
+
+    _level_msg = {
+        0 = "[err]",
+        1 = "[warn]",
+        2 = "[info]",
+        3 = "[debug]"
+    }
+
+    -- MARK: public
+
+    ERR = 0
+    WARN = 1
+    INFO = 2
+    DEBUG = 3
+
+    static fn setDir(dir, fname, mode) {
+        dir = tostring(dir) or './'
+        os.execute('mkdir -p ' .. dir)
+        Self._fp = io.open(dir .. (fname or "cincau.log"), mode or "a+")
+    }
+
+    static fn setLevel(level) {
+        level = mmax(Self.ERR, level)
+        level = mmin(Self.DEBUG, level)
+        Self._level = level
+    }
+
+    static fn printf(level, fmt, ...) {
+        guard Self.isValidLevel(level) and type(fmt) == "string" else {
+            return
         }
+        fp = Self._fp or io.stdout
+        fname = Self._getFname()
+        tm = Self._getTM()
+        msg = Self._level_msg[level] .. tm .. fname .. sfmt(fmt, ...)
+        fp:write(msg .. "\n")
     }
 
-    -- 'debug', 'info', 'warn', 'error'
-    fn init(tag_name, level_name) {
-        self._name = tag_name and (tag_name .. " ") or "[Log] "
-        self._level = _level_name_number[level_name] or 1
-        tbl = {}
-        for k, v in pairs(_level_name_number) {
-            tbl[tonumber(v)] = k:sub(1, 1):upper() .. "." .. tag_name .. " "
+    static fn err(fmt, ...) {
+        Self.printf(Self.ERR, fmt, ...)
+    }
+
+    static fn warn(fmt, ...) {
+        Self.printf(Self.WARN, fmt, ...)
+    }
+
+    static fn info(fmt, ...) {
+        Self.printf(Self.INFO, fmt, ...)
+    }
+
+    static fn debug(fmt, ...) {
+        Self.printf(Self.DEBUG, fmt, ...)
+    }
+
+    -- MARK: internal
+
+    static fn isValidLevel(level) {
+        return level >= Self.ERR and level <= Self._level
+    }
+
+    static fn _getFname() {
+        info = dbgInfo(4, 'S')
+        fname = Self._fname_tbl[info.source]
+        if fname {
+            return fname
         }
-        self._tags = tbl
+        fname = ' ' .. info.source:match("[^/]*.%w$") .. ' '
+        Self._fname_tbl[info.source] = fname
+        return fname
     }
 
-    fn _log(level_name, fmt, ...) {
-        number = _level_name_number[level_name] or 5
-        if number >= self._level {
-            tag = self._tags[number]
-            io.write(tag .. string.format(fmt, ...) .. "\n")
-            _fpTagPrintf(tag .. string.format(fmt, ...))
+    static fn _getTM() {
+        ti = otime()
+        ti60 = ti/60
+        if ti60 != Self._last_min {
+            Self._last_min = ti60
+            Self._last_fmt = odate(" %F %R:", ti)
         }
+        return Self._last_fmt .. Self._lastSec(tostring(ti%60))
     }
 
-    fn error(fmt, ...) {
-        self:_log("error", fmt, ...)
-    }
-
-    fn warn(fmt, ...) {
-        self:_log("warn", fmt, ...)
-    }
-
-    fn info(fmt, ...) {
-        self:_log("info", fmt, ...)
-    }
-
-    fn trace(fmt, ...) {
-        self:_log("trace", fmt, ...)
-    }
-
-    fn debug(fmt, ...) {
-        self:_log("debug", fmt, ...)
+    static fn _lastSec(sec_str) {
+        return (sec_str:len() >= 2) and sec_str or ('0' .. sec_str)
     }
 }
 
