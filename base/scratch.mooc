@@ -46,8 +46,8 @@ fn table.dump(tbl, opts) {
 -- return a readonly table
 fn table.readonly(tbl, err_message) {
     return setmetatable({}, {
-            __index : tbl,
-            __newindex : fn(t, k, v) {
+            __index = tbl,
+            __newindex = fn(t, k, v) {
                 error(err_message, 2)
             }
         }
@@ -112,14 +112,14 @@ fn io.printf(fmt, ...) {
 
 -- validate input parameter is valid type described in type_desc, only 1 depth
 _type_string = {
-    "I" : "nil",
-    "N" : "number",
-    "S" : "string",
-    "B" : "boolean",
-    "T" : "table",
-    "F" : "function",
-    "D" : "thread",
-    "U" : "userdata"
+    "I" = "nil",
+    "N" = "number",
+    "S" = "string",
+    "B" = "boolean",
+    "T" = "table",
+    "F" = "function",
+    "D" = "thread",
+    "U" = "userdata"
 }
 
 export struct Lang {
@@ -140,5 +140,5 @@ fn tracebackHandler(msg) {
 }
 
 return {
-    :tracebackHandler
+    =tracebackHandler
 }

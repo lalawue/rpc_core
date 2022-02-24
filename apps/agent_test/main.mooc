@@ -61,18 +61,18 @@ class Test : AppBase {
         } else {
             Log:info("get ip from host '%s'", url_info.host)
             timeout_second = AppEnv.Config.RPC_TIMEOUT
-            path_args = { "domain" : url_info.host } -- use HTTP path query string, whatever key
+            path_args = { "domain" = url_info.host } -- use HTTP path query string, whatever key
 
-            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_JSON, {timeout : timeout_second}, path_args)
+            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, path_args)
             Log:info("DNS_JSON with path_args result %s", success)
 
-            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_JSON, {timeout : timeout_second}, nil, path_args)
+            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_JSON, {timeout = timeout_second}, nil, path_args)
             Log:info("DNS_JSON with body_args result %s", success)
 
-            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_SPROTO, {timeout : timeout_second}, path_args)
+            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_SPROTO, {timeout = timeout_second}, path_args)
             Log:info("LUA_SPROTO with path_args result %s", success)
 
-            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_SPROTO, {timeout : timeout_second}, nil, path_args)
+            success, datas = RpcCore.newRequest(AppEnv.Service.DNS_SPROTO, {timeout = timeout_second}, nil, path_args)
             Log:info("LUA_SPROTO with body_args result %s", success)
 
             if not success {
@@ -83,7 +83,7 @@ class Test : AppBase {
 
         Log:info("open browser with %s", self._url)
         browser = Browser()
-        success, http_header, content = browser:requestURL(self._url, {timeout : 30, inflate : true})
+        success, http_header, content = browser:requestURL(self._url, {timeout = 30, inflate = true})
         Log:info("reqeust result: %s", success)
         if success {
             -- Log:info("content %s", content)

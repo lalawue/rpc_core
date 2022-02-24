@@ -41,8 +41,8 @@ class ObjDB : AppBase {
     -- main obj database
     fn loadObjDB() {
         config = {
-            dir : self._dir,
-            file_size : 128 * 1024 * 1024 -- 128MB
+            dir = self._dir,
+            file_size = 128 * 1024 * 1024 -- 128MB
         }
         db = Bitcask.opendb(config)
         if db {

@@ -156,7 +156,7 @@ class DNS : AppBase {
         }
         ipv4 = self._domain_tbl[domain]
         if ipv4 {
-            rpc_response:sendResponse({ipv4 : ipv4})
+            rpc_response:sendResponse({ipv4 = ipv4})
         } else {
             -- build UDP package
             qid = math.random(65535)
@@ -167,7 +167,7 @@ class DNS : AppBase {
                 rpc_response:sendResponse({})
                 return
             }
-            item = { :qid, :domain, :query_size}
+            item = { =qid, =domain, =query_size}
             self._qid_avl:insert(item)
             data = _string(_buf, query_size)
             for _, chann in ipairs(self._svr_tbl) {
@@ -189,7 +189,7 @@ class DNS : AppBase {
         -- check response
         _copy(_buf, pkg_data, pkg_data:len())
         qid = DnsCore.mdns_response_fetch_qid(_buf, pkg_data:len())
-        item = self._qid_avl:find({:qid})
+        item = self._qid_avl:find({ =qid })
         if not item {
             return
         }
@@ -211,7 +211,7 @@ class DNS : AppBase {
         ipv4 = string.format("%d.%d.%d.%d", out:byte(1), out:byte(2), out:byte(3), out:byte(4))
         self._domain_tbl[item.domain] = ipv4
         -- process wait response
-        self:_rpcResponse(item.domain, {:ipv4})
+        self:_rpcResponse(item.domain, { =ipv4 })
         -- remove from wait processing list
         self._qid_avl:remove(item)
     }

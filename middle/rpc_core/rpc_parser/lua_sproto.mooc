@@ -57,7 +57,7 @@ struct SprotoParser {
         ret_decode, object, name_tag = pcall(self._func, _parser, self._info.name, content)
         if ret_decode {
             if object {
-                name_tag = { "name" : self._info.name }
+                name_tag = { "name" = self._info.name }
                 self._data = ""
             } else {
                 name_tag = nil

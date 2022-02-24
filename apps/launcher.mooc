@@ -5,8 +5,8 @@
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
-support_arch = { "x86" : "", "x64" : ""}
-support_os = { "Linux" : "", "OSX" : "", "BSD" : "", "Windows" : ""}
+support_arch = { "x86" = "", "x64" = ""}
+support_os = { "Linux" = "", "OSX" = "", "BSD" = "", "Windows" = ""}
 if jit and support_arch[jit.arch] and support_os[jit.os] {
     -- supported arch and os
 } else {

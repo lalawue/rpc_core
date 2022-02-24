@@ -25,11 +25,14 @@ struct Logger {
     _last_min = -1
     _last_fmt = ''
 
+    _prefix = ""
+
     _level_msg = {
         0 = "[err]",
         1 = "[warn]",
         2 = "[info]",
-        3 = "[debug]"
+        3 = "[debug]",
+        4 = "[trace]"
     }
 
     -- MARK: public
@@ -38,6 +41,7 @@ struct Logger {
     WARN = 1
     INFO = 2
     DEBUG = 3
+    TRACE = 4
 
     static fn setDir(dir, fname, mode) {
         dir = tostring(dir) or './'
@@ -45,46 +49,62 @@ struct Logger {
         Self._fp = io.open(dir .. (fname or "cincau.log"), mode or "a+")
     }
 
-    static fn setLevel(level) {
-        level = mmax(Self.ERR, level)
-        level = mmin(Self.DEBUG, level)
-        Self._level = level
+    fn init(prefix, level) {
+        self._prefix = prefix .. " "
+        switch level {
+            case "err": level = 0
+            case "warn": level = 1
+            case "info": level = 2
+            case "debug": level = 3
+            default: level = 4
+        }
+        self:setLevel(level)
     }
 
-    static fn printf(level, fmt, ...) {
-        guard Self.isValidLevel(level) and type(fmt) == "string" else {
+    fn setLevel(level) {
+        level = mmax(self.ERR, level)
+        level = mmin(self.DEBUG, level)
+        self._level = level
+    }
+
+    fn printf(level, fmt, ...) {
+        guard self:isValidLevel(level) and type(fmt) == "string" else {
             return
         }
         fp = Self._fp or io.stdout
-        fname = Self._getFname()
-        tm = Self._getTM()
-        msg = Self._level_msg[level] .. tm .. fname .. sfmt(fmt, ...)
+        fname = self:_getFname()
+        tm = self:_getTM()
+        msg = self._prefix .. Self._level_msg[level] .. tm .. fname .. sfmt(fmt, ...)
         fp:write(msg .. "\n")
     }
 
-    static fn err(fmt, ...) {
-        Self.printf(Self.ERR, fmt, ...)
+    fn error(fmt, ...) {
+        self:printf(self.ERR, fmt, ...)
     }
 
-    static fn warn(fmt, ...) {
-        Self.printf(Self.WARN, fmt, ...)
+    fn warn(fmt, ...) {
+        self:printf(self.WARN, fmt, ...)
     }
 
-    static fn info(fmt, ...) {
-        Self.printf(Self.INFO, fmt, ...)
+    fn info(fmt, ...) {
+        self:printf(self.INFO, fmt, ...)
     }
 
-    static fn debug(fmt, ...) {
-        Self.printf(Self.DEBUG, fmt, ...)
+    fn debug(fmt, ...) {
+        self:printf(self.DEBUG, fmt, ...)
+    }
+
+    fn trace(fmt, ...) {
+        self:printf(self.TRACE, fmt, ...)
     }
 
     -- MARK: internal
 
-    static fn isValidLevel(level) {
-        return level >= Self.ERR and level <= Self._level
+    fn isValidLevel(level) {
+        return level >= self.ERR and level <= self._level
     }
 
-    static fn _getFname() {
+    fn _getFname() {
         info = dbgInfo(4, 'S')
         fname = Self._fname_tbl[info.source]
         if fname {
@@ -95,17 +115,17 @@ struct Logger {
         return fname
     }
 
-    static fn _getTM() {
+    fn _getTM() {
         ti = otime()
         ti60 = ti/60
-        if ti60 != Self._last_min {
-            Self._last_min = ti60
-            Self._last_fmt = odate(" %F %R:", ti)
+        if ti60 != self._last_min {
+            self._last_min = ti60
+            self._last_fmt = odate(" %F %R:", ti)
         }
-        return Self._last_fmt .. Self._lastSec(tostring(ti%60))
+        return self._last_fmt .. self:_lastSec(tostring(ti%60))
     }
 
-    static fn _lastSec(sec_str) {
+    fn _lastSec(sec_str) {
         return (sec_str:len() >= 2) and sec_str or ('0' .. sec_str)
     }
 }

@@ -24,8 +24,8 @@ class AgentRedis : AppBase {
         newRequest = rpc_core.newRequest
         protocol = AppEnv.Service.LUA_RESP
         opt = {
-            timeout : AppEnv.Config.RPC_TIMEOUT,
-            keep_alive : true
+            timeout = AppEnv.Config.RPC_TIMEOUT,
+            keep_alive = true
         }
 
         ret = nil

@@ -37,52 +37,52 @@ fn _parseSprotoSpec(file_path) {
 struct AppEnv {
     -- define your app config
     Config = {
-        APP_DIR : "", -- app dir
-        TMP_DIR : _tmpDir(), -- tmp dir
-        DATA_DIR : _tmpDir() .. "/rpc_apps", -- data dir
-        LOOP_IPV4 : "127.0.0.1", -- loop ip
-        HOST_IPV4 : "0.0.0.0", -- host ip
-        RPC_TIMEOUT : 8 -- 8 second
+        APP_DIR = "", -- app dir
+        TMP_DIR = _tmpDir(), -- tmp dir
+        DATA_DIR = _tmpDir() .. "/rpc_apps", -- data dir
+        LOOP_IPV4 = "127.0.0.1", -- loop ip
+        HOST_IPV4 = "0.0.0.0", -- host ip
+        RPC_TIMEOUT = 8 -- 8 second
     }
 
     Prototols = {
-        TCP_RAW : "TCP_RAW", -- raw data in TCP, with 2 bytes length ahead
-        HTTP_JSON : "HTTP_JSON", -- JSON in HTTP body
-        LUA_SPROTO : "LUA_SPROTO", -- https://github.com/cloudwu/sproto, like protobuf, with 2 bytes length ahead
-        LUA_RESP : "LUA_RESP" -- Redis Protocol specification 2
+        TCP_RAW = "TCP_RAW", -- raw data in TCP, with 2 bytes length ahead
+        HTTP_JSON = "HTTP_JSON", -- JSON in HTTP body
+        LUA_SPROTO = "LUA_SPROTO", -- https://github.com/cloudwu/sproto, like protobuf, with 2 bytes length ahead
+        LUA_RESP = "LUA_RESP" -- Redis Protocol specification 2
     }
 
     Store = {
         -- parse sproto spec first
-        AppEnv.Prototols.LUA_SPROTO : _parseSprotoSpec("config/rpc_spec.sproto")
+        AppEnv.Prototols.LUA_SPROTO = _parseSprotoSpec("config/rpc_spec.sproto")
     }
 
     -- service info for publisher or caller
     Service = {
         -- rpc_name = { name = "rpc_name", proto = 'AppEnv.Prototols', ipv4 = '127.0.0.1', port = 1024 }
-        DNS_JSON : {
-            name : "dns_json",
-            proto : AppEnv.Prototols.HTTP_JSON,
-            ipv4 : AppEnv.Config.LOOP_IPV4,
-            port : 10053
+        DNS_JSON = {
+            name = "dns_json",
+            proto = AppEnv.Prototols.HTTP_JSON,
+            ipv4 = AppEnv.Config.LOOP_IPV4,
+            port = 10053
         },
-        DNS_SPROTO : {
-            name : "dns_sproto", -- message name in sproto spec
-            proto : AppEnv.Prototols.LUA_SPROTO,
-            ipv4 : AppEnv.Config.LOOP_IPV4,
-            port : 10054
+        DNS_SPROTO = {
+            name = "dns_sproto", -- message name in sproto spec
+            proto = AppEnv.Prototols.LUA_SPROTO,
+            ipv4 = AppEnv.Config.LOOP_IPV4,
+            port = 10054
         },
-        LUA_RESP : {
-            name : "resp_v2",
-            proto : AppEnv.Prototols.LUA_RESP,
-            ipv4 : AppEnv.Config.LOOP_IPV4,
-            port : 6379
+        LUA_RESP = {
+            name = "resp_v2",
+            proto = AppEnv.Prototols.LUA_RESP,
+            ipv4 = AppEnv.Config.LOOP_IPV4,
+            port = 6379
         },
-        OBJDB_RESP : {
-            name : "objdb",
-            proto : AppEnv.Prototols.LUA_RESP,
-            ipv4 : AppEnv.Config.LOOP_IPV4,
-            port : 10060
+        OBJDB_RESP = {
+            name = "objdb",
+            proto = AppEnv.Prototols.LUA_RESP,
+            ipv4 = AppEnv.Config.LOOP_IPV4,
+            port = 10060
         }
     }
 }

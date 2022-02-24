@@ -159,7 +159,7 @@ struct Browser {
             port = url_info.port
         }
 
-        self._chann = TcpRaw()
+        self._chann = TcpRaw(url_info.scheme)
         if url_info.scheme == "http" {
             port = port and tonumber(port) or 80
         } else {
