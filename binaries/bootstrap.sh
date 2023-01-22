@@ -29,7 +29,6 @@ $INSTALL lua-cjson
 $INSTALL serpent
 $INSTALL sql-orm
 $INSTALL date
-$INSTALL lua-curl
 
 BINARIES_DIR=lib/lua/5.1/
 
