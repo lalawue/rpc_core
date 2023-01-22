@@ -24,6 +24,7 @@ build = {
       ["mnet"] = {
          sources = { "src/mnet_core.c", "extension/lua/mnet_lua.c", "extension/mdns_utils/mdns_utils.c", "extension/openssl/mnet_tls.c" },
          incdirs = { "src", "extension/openssl", "$(OPENSSL_INCDIR)" },
+         libdirs = { "$(OPENSSL_LIBDIR)" },
          libraries = { "ssl" }
       },
       ["mnet-chann"] = "extension/lua/mnet-chann.lua",
