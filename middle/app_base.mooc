@@ -19,13 +19,13 @@ class AppBase {
    -- launch app
    fn launch() {
       RpcCore.initFramework()
-      Log:info("'%s' load business", self.typename)
+      Log:info("'%s' load business", self.__tn)
       guard xpcall(self.loadBusiness, Base.tracebackHandler, self, RpcCore) else {
          os.exit(0)
          return
       }
       co = coroutine.create({ _ in
-         Log:info("'%s' start business coroutine", self.typename)
+         Log:info("'%s' start business coroutine", self.__tn)
          guard xpcall(self.startBusiness, Base.tracebackHandler, self, RpcCore) else {
             os.exit(0)
             return

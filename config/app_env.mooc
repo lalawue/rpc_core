@@ -54,7 +54,7 @@ struct AppEnv {
 
     Store = {
         -- parse sproto spec first
-        AppEnv.Prototols.LUA_SPROTO = _parseSprotoSpec("config/rpc_spec.sproto")
+        [AppEnv.Prototols.LUA_SPROTO] = _parseSprotoSpec("config/rpc_spec.sproto")
     }
 
     -- service info for publisher or caller

@@ -25,6 +25,7 @@ fi
 
 # system library and Lua library path
 export DYLD_LIBRARY_PATH=$BINARIES_DIR/lib/lua/5.1/
+export LD_LIBRARY_PATH=$BINARIES_DIR/lib/lua/5.1/
 export LUA_CPATH=$BINARIES_DIR/lib/lua/5.1/?.so
 export LUA_PATH="?.lua;middle/?.lua;$BINARIES_DIR/share/lua/5.1/?.lua"
 export PATH=$PATH:$BINARIES_DIR/bin/

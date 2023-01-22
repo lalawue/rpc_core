@@ -12,10 +12,10 @@ import LuaResp from "rpc_core.rpc_dial.lua_resp"
 Log = require("middle.logger")("[RPC]", "error")
 
 local All_Dials = {
-    AppEnv.Prototols.TCP_RAW = TcpRaw,
-    AppEnv.Prototols.HTTP_JSON = HttpJson,
-    AppEnv.Prototols.LUA_SPROTO = LuaSproto,
-    AppEnv.Prototols.LUA_RESP = LuaResp,
+    [AppEnv.Prototols.TCP_RAW] = TcpRaw,
+    [AppEnv.Prototols.HTTP_JSON] = HttpJson,
+    [AppEnv.Prototols.LUA_SPROTO] = LuaSproto,
+    [AppEnv.Prototols.LUA_RESP] = LuaResp,
 }
 
 struct RpcDial {

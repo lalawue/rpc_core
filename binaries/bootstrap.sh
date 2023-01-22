@@ -40,4 +40,13 @@ if [ "$(uname)" = "Darwin" ]; then
 		echo ln -sf $f lib$e.dylib
 		ln -sf $f lib$e.dylib
 	done
+elif [ "$(uname)" = "Linux" ]; then
+	echo cd lib/lua/5.1
+	cd lib/lua/5.1
+	for f in *.so; do
+		e=$(echo $f | cut -d. -f1)
+		echo ln -sf $f lib$e.so
+		ln -sf $f lib$e.so
+	done
+
 fi
