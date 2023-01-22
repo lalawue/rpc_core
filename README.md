@@ -5,7 +5,7 @@ rpc_core was a LuaJIT base network bundle aim to easily build simple network app
 
 Support MacOS/Linux/FreeBSD.
 
-Not support https, you can use [stunnel](https://www.stunnel.org/), [nginx](https://www.nginx.com/) or [openresty](https://openresty.org/) as HTTPS revers proxy.
+only support HTTPS in client side; In server side, you can use [stunnel](https://www.stunnel.org/), [nginx](https://www.nginx.com/) or [openresty](https://openresty.org/) as HTTPS revers proxy.
 
 currently only support [MoonCake](https://github.com/lalawue/mooncake), A Swift like programming language compiles to Lua, as its entry loader.
 
@@ -14,7 +14,7 @@ currently only support [MoonCake](https://github.com/lalawue/mooncake), A Swift 
 
 require [LuaJIT](https://luajit.org/) and [LuaRocks](https://luarocks.org/), please install it first.
 
-```js
+```sh
 $ cd binaries
 $ ./bootstrap.sh
 ```
@@ -25,7 +25,7 @@ here will install required rocks tree in binaries/ dir.
 
 you can list supported apps just
 
-```js
+```sh
 $ ./run_app.sh
 APP_ENV_CONFIG: not set, use config.app_env instead
 I.[AppEnv] parse sproto spec config/app_rpc_spec.sproto
@@ -39,7 +39,7 @@ supported apps:
 
 in a terminal, setup DNS service with RESTfull JSON API
 
-```js
+```sh
 $ ./run_app.sh service_dns
 APP_ENV_CONFIG: not set, use config/app_env.mooc instead
 I.[AppEnv] parse sproto spec config/rpc_spec.sproto
@@ -51,7 +51,7 @@ I.[App] 'DNS' start business coroutine
 
 in another terminal, fetch page from http://www.baidu.com, print out HTTP header
 
-```js
+```sh
 APP_ENV_CONFIG: not set, use config/app_env.mooc instead
 I.[AppEnv] parse sproto spec config/rpc_spec.sproto
 I.[Test] Test init with agent_test
@@ -113,17 +113,17 @@ first define HTTP JSON RESTful api in app_env.mooc, likes below:
 AppEnv.Service = {
    --[[
       rpc_name = {
-         name : "rpc_name",
-         proto : 'AppEnv.Prototols',
-         ipv4 : '127.0.0.1',
-         port : 1024
+         name = "rpc_name",
+         proto = 'AppEnv.Prototols',
+         ipv4 = '127.0.0.1',
+         port = 1024
       }
    ]]
-   DNS_JSON : {
-      name : "dns_json",
-      proto : AppEnv.Prototols.HTTP_JSON,
-      ipv4 : '127.0.0.1',
-      port : 10053
+   DNS_JSON = {
+      name = "dns_json",
+      proto = AppEnv.Prototols.HTTP_JSON,
+      ipv4 = '127.0.0.1',
+      port = 10053
    },
    ...
 }
@@ -147,7 +147,7 @@ class MyService : AppBase {
          url = UrlCore.parse(proto_info.url)
          table.dump( url ) -- dump URL info
          table.dump( request_object ) -- dump JSON objct
-         ret_table = { ["key"] : "value" } -- create return object 
+         ret_table = { ["key"] : "value" } -- create return object
          rpc_response:sendResponse( ret_table ) -- send response
       }
    }
@@ -164,13 +164,13 @@ class MyService : AppBase {
 return MyService
 ```
 
-more complicated service app is apps/service_dns, which provide HTTP_JSON and SPROTO interface, also created UDP
+more complicated service app is `apps/service_dns`, which provide HTTP_JSON and SPROTO interface, also created UDP
  port to query DNS service.
 
 
 # Fetch a gziped HTML page
 
-like apps/agent_test, create middle.http_browser instance, request gziped HTML pages.
+like `apps/agent_test`, create middle.http_browser instance, request gziped HTML pages.
 
 ```lua
 import AppBase from "middle.app_framework"
@@ -221,9 +221,9 @@ or apps/service_objdb using RESP (Redis Protocol specification 2) for object sto
 
 Thanks people provide libraries below:
 
-- [LuaJIT](http://luajit.org/), a Just-In-Time Compiler for Lua by Mike Pall 
+- [LuaJIT](http://luajit.org/), a Just-In-Time Compiler for Lua by Mike Pall
 - [lpeg](https://github.com/LuaDist/lpeg), Parsing Expression Grammars For Lua
-- [luafilesystem](https://github.com/keplerproject/luafilesystem)
+- [luafilesystem](https://github.com/lunarmodules/luafilesystem)
 - [hamishforbes/lua-ffi-zlib](https://github.com/hamishforbes/lua-ffi-zlib)
 - [pkulchenko/serpent](https://github.com/pkulchenko/serpent), Lua serializer and pretty printer
 - [openssl/openssl](https://github.com/openssl/openssl), TLS/SSL and crypto library

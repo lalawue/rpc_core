@@ -16,16 +16,21 @@ which_program() {
 which_program $LUA_JIT
 which_program $LUA_ROCKS
 
-if [ -z "tmp/openssl-1.1.1s.tar.gz" ]; then
+SSL_NAME=openssl-1.1.1s
+if [ -e "tmp/$SSL_NAME.tar.gz" ]; then
+	echo "tmp/$SSL_NAME.tar.gz exist"
+else
 	mkdir -p tmp
 	cd tmp
-	#wget https://www.openssl.org/source/openssl-1.1.1s.tar.gz 
-	tar xzf openssl-1.1.1s.tar.gz
-	cd openssl-1.1.1s
+	wget https://www.openssl.org/source/$SSL_NAME.tar.gz 
+	tar xzf $SSL_NAME.tar.gz
+	cd $SSL_NAME
 	./config --prefix=$PWD/../../
         make
         make install_sw
 	cd ../..
+	rm -rf tmp/$SSL_NAME
+	rm -f lib/*.a
 fi
 
 INSTALL="$LUA_ROCKS --tree . install"
@@ -41,6 +46,7 @@ $INSTALL lua-cjson
 $INSTALL serpent
 $INSTALL sql-orm
 $INSTALL date
+$INSTALL luafilesystem
 
 BINARIES_DIR=lib/lua/5.1/
 

@@ -28,7 +28,7 @@ export DYLD_LIBRARY_PATH="$BINARIES_DIR/lib/:$BINARIES_DIR/lib/lua/5.1/"
 export LD_LIBRARY_PATH="$BINARIES_DIR/lib/:$BINARIES_DIR/lib/lua/5.1/"
 export LUA_CPATH=$BINARIES_DIR/lib/lua/5.1/?.so
 export LUA_PATH="?.lua;middle/?.lua;$BINARIES_DIR/share/lua/5.1/?.lua"
-export PATH=$PATH:$BINARIES_DIR/bin/
+export PATH=$BINARIES_DIR/bin/:$PATH
 
 # luajit invoke
 exec moocscript apps/launcher.mooc $*

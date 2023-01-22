@@ -55,6 +55,9 @@ fn _buildHttpRequest(method, url_info, option, data) {
 }
 
 fn _processRecvData(brw, data) {
+    guard type(data) == "string" and data:len() > 0 else {
+        return 0
+    }
     ret, state, http_tbl = brw._hp:process(data)
     if ret < 0 {
         return ret
@@ -127,7 +130,7 @@ struct Browser {
         }
 
         if url_info.scheme ~= "http" and url_info.scheme ~= "https" {
-            Log:error("invalid scheme")
+            Log:error("invalid scheme, only support `HTTP` or `HTTPS`")
             return false
         }
 

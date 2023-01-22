@@ -9,8 +9,31 @@
 -- raw tcp stated stream, interface should be same as tcp_ssl
 --
 
+import FFI from "ffi"
 import NetCore from "ffi-mnet"
 Log = require("middle.logger")("[TcpRaw]", "error")
+
+FFI.cdef([[
+    enum {
+        SSL_VERIFY_NONE = 0x00,
+        SSL_VERIFY_PEER = 0x01,
+        SSL_VERIFY_FAIL_IF_NO_PEER_CERT = 0x02,
+        SSL_VERIFY_CLIENT_ONCE = 0x04,
+        SSL_VERIFY_POST_HANDSHAKE = 0x08,
+    };
+    enum {
+        SSL_FILETYPE_PEM = 1,
+        SSL_FILETYPE_ASN1 = 2,
+    };
+    void OPENSSL_init_ssl(uint64_t, void*);
+    void* TLS_method(void);
+    void* SSL_CTX_new(void *);
+    void SSL_CTX_set_verify(void*, int, void*);
+    int SSL_CTX_load_verify_locations(void*, const char*, const char*);
+    int SSL_CTX_use_certificate_file(void*, const char*, int);
+    int SSL_CTX_use_PrivateKey_file(void*, const char *, int);
+    int SSL_CTX_check_private_key(void*);
+]])
 
 _has_init = false
 
@@ -18,13 +41,35 @@ struct ChannRaw {
     _options = false
     _chann = false
     _callback = false
+    _openssl = false
 
     fn init(options) {
         if not _has_init {
             NetCore.init()
         }
         self._options = options
-        self._chann = NetCore.openChann((options == "https") and "tls" or "tcp")
+        if options == "https" {
+            self:installOpenSSL()
+            self._chann = NetCore.openChann("tls")
+        } else {
+            self._chann = NetCore.openChann("tcp")
+        }
+    }
+
+    fn installOpenSSL() {
+        guard self._openssl == false else {
+            return
+        }
+        openssl = FFI.load("libssl.so.1.1")
+        openssl.OPENSSL_init_ssl(0, nil)
+        ctx = openssl.SSL_CTX_new(openssl.TLS_method())
+        openssl.SSL_CTX_set_verify(ctx, openssl.SSL_VERIFY_NONE, nil)
+        --openssl.SSL_CTX_load_verify_locations(ctx, "examples/openssl/ca.crt", nil)
+        --openssl.SSL_CTX_use_certificate_file(ctx, "examples/openssl/server.crt", openssl.SSL_FILETYPE_PEM)
+        --openssl.SSL_CTX_use_PrivateKey_file(ctx, "examples/openssl/server.key", openssl.SSL_FILETYPE_PEM);
+        --assert(openssl.SSL_CTX_check_private_key(ctx) == 1)
+        NetCore.extConfig("tls", ctx)
+        self._openssl = openssl
     }
 
     fn closeChann() {
