@@ -19,7 +19,7 @@ which_program $LUA_ROCKS
 INSTALL="$LUA_ROCKS --tree . install"
 echo $INSTALL
 
-$INSTALL mnet
+$INSTALL specs/mnet-cincau-1.rockspec OPENSSL_INCDIR=/usr/include/
 $INSTALL ffi-hyperparser
 $INSTALL mooncake
 $INSTALL lua-resp
